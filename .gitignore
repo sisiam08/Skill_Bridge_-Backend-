@@ -1,0 +1,22 @@
+node_modules
+# Keep environment variables out of version control
+.env
+.env.local
+
+# Lock files
+bun.lock
+package-lock.json
+
+# Build and dist folders
+dist/
+build/
+
+# Generated files
+prisma/generated/prisma
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
