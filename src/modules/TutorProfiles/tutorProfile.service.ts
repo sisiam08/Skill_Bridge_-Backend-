@@ -57,8 +57,6 @@ const updateProfile = async (
   return result;
 };
 
-
-
 const deleteProfile = async (id: string) => {
   const result = await prisma.tutorProfiles.delete({
     where: { id },
@@ -66,6 +64,22 @@ const deleteProfile = async (id: string) => {
 
   return result;
 };
+
+const setAvailability = async (
+  tutorId: string,
+  availability: Omit<TutorAvailability, "id">,
+) => {
+  const result = await prisma.tutorAvailability.create({
+    data: {
+      ...availability,
+      tutorId,
+    },
+  });
+
+  return result;
+};
+
+
 
 export const TutorProfileServices = {
   createProfile,
