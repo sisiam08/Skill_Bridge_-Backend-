@@ -1,8 +1,0 @@
-model Categories {
-    id   String @id @default(uuid())
-    name String @db.VarChar(100)
-
-    tutorProfiles TutorProfiles[]
-
-    @@map("categories")
-}

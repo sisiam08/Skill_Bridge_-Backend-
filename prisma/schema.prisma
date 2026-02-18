@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  STUDENT
+  TUTOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Users {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  profileImage  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  role   UserRole
+  phone  String?
+  status UserStatus? @default(ACTIVE)
+
+  // tutorProfiles TutorProfiles?
+  // bookings      Bookings[]
+  // reviews       Reviews[]
+
+  @@unique([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model TutorProfiles {
+  id              String     @id @default(uuid())
+  userId          String     @unique
+  categoriesId    String
+  bio             String?    @db.VarChar(255)
+  availability    Json?
+  hourlyRate      Float      @default(0.00)
+  experienceYears Int
+  averagerating   Float      @default(0)
+  totalReviews    Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  bookings        Bookings[]
+  reviews         Reviews[]
+
+  // user     Users      @relation(fields: [userId], references: [id])
+  category Categories @relation(fields: [categoriesId], references: [id])
+
+  @@index([userId])
+  @@map("tutorProfiles")
+}
+
+model Categories {
+  id       String  @id @default(uuid())
+  name     String  @unique @db.VarChar(100)
+  isActive Boolean @default(true)
+
+  tutorProfiles TutorProfiles[]
+
+  @@index([name])
+  @@map("categories")
+}
+
+enum BookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Bookings {
+  id          String        @id @default(uuid())
+  studentId   String
+  tutorid     String
+  sessionDate DateTime
+  startTime   DateTime
+  endTime     DateTime
+  price       Float
+  status      BookingStatus @default(CONFIRMED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  reviews Reviews?
+
+  // student Users         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tutor TutorProfiles @relation(fields: [tutorid], references: [id])
+
+  @@map("bookings")
+}
+
+model Reviews {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  studenId  String
+  tutorId   String
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Bookings      @relation(fields: [bookingId], references: [id])
+  // student Users         @relation(fields: [studenId], references: [id], onDelete: Cascade)
+  tutor   TutorProfiles @relation(fields: [tutorId], references: [id])
+
+  @@index([bookingId])
+  @@map("reviews")
+}
