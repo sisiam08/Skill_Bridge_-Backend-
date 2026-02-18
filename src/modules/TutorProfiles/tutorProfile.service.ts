@@ -1,8 +1,9 @@
+import { TutorAvailability } from "../../../generated/prisma/client";
 import {
-  TutorAvailability,
-  TutorProfiles,
-} from "../../../generated/prisma/client";
-import { TutorProfilesCreateInput } from "../../../generated/prisma/models";
+  TutorAvailabilityUpdateInput,
+  TutorProfilesCreateInput,
+  TutorProfilesUpdateInput,
+} from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
 const createProfile = async (tutorData: TutorProfilesCreateInput) => {
@@ -36,15 +37,7 @@ const getProfileById = async (id: string) => {
 
 const updateProfile = async (
   id: string,
-  tutorData: Omit<
-    TutorProfiles,
-    | "id"
-    | "userId"
-    | "categoriesId"
-    | "createdAt"
-    | "updatedAt"
-    | "availability"
-  >,
+  tutorData: TutorProfilesUpdateInput,
 ) => {
   const result = await prisma.tutorProfiles.update({
     where: { id },
@@ -67,19 +60,29 @@ const deleteProfile = async (id: string) => {
 
 const setAvailability = async (
   tutorId: string,
-  availability: Omit<TutorAvailability, "id">,
+  availability: Omit<TutorAvailability, "id" | "tutorId">,
 ) => {
   const result = await prisma.tutorAvailability.create({
     data: {
-      ...availability,
       tutorId,
+      ...availability,
     },
   });
 
   return result;
 };
 
+const updateAvailability = async (
+  id: string,
+  availability: TutorAvailabilityUpdateInput,
+) => {
+  const result = await prisma.tutorAvailability.update({
+    where: { id },
+    data: availability,
+  });
 
+  return result;
+};
 
 export const TutorProfileServices = {
   createProfile,
@@ -87,4 +90,6 @@ export const TutorProfileServices = {
   getProfileById,
   updateProfile,
   deleteProfile,
+  setAvailability,
+  updateAvailability,
 };

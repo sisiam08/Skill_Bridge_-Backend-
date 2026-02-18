@@ -13,4 +13,9 @@ router.patch("/:id", TutorProfileController.updateProfile);
 
 router.delete("/:id", TutorProfileController.deleteProfile);
 
+router.post("/:id/availability", TutorProfileController.setAvailability);
+
+router.patch("/availability/:id", TutorProfileController.updateAvailability);
+
+
 export const TutorProfileRouters: Router = router;

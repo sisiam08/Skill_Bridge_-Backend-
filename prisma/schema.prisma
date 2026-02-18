@@ -7,16 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  STUDENT
-  TUTOR
-  ADMIN
-}
+// enum UserRole {
+//   STUDENT
+//   TUTOR
+//   ADMIN
+// }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-}
+// enum UserStatus {
+//   ACTIVE
+//   INACTIVE
+// }
 
 model Users {
   id            String    @id
@@ -29,13 +29,13 @@ model Users {
   sessions      Session[]
   accounts      Account[]
 
-  role   UserRole
+  role   String
   phone  String?
-  status UserStatus? @default(ACTIVE)
+  status String? @default("ACTIVE")
 
-  // tutorProfiles TutorProfiles?
-  // bookings      Bookings[]
-  // reviews       Reviews[]
+  tutorProfiles TutorProfiles?
+  bookings      Bookings[]
+  reviews       Reviews[]
 
   @@unique([email])
   @@map("users")
@@ -103,7 +103,7 @@ model TutorProfiles {
   bookings        Bookings[]
   reviews         Reviews[]
 
-  // user     Users      @relation(fields: [userId], references: [id])
+  user         Users               @relation(fields: [userId], references: [id])
   category     Categories          @relation(fields: [categoriesId], references: [id])
   availability TutorAvailability[]
 
@@ -112,13 +112,16 @@ model TutorProfiles {
 }
 
 model TutorAvailability {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   tutorId   String
   dayOfWeek Int
   startTime String
   endTime   String
+  isActive  Boolean @default(true)
 
   tutor TutorProfiles @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+
+  @@map("tutorAvailability")
 }
 
 model Categories {
@@ -152,8 +155,8 @@ model Bookings {
 
   reviews Reviews?
 
-  // student Users         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  tutor TutorProfiles @relation(fields: [tutorid], references: [id])
+  student Users         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tutor   TutorProfiles @relation(fields: [tutorid], references: [id])
 
   @@index([id])
   @@map("bookings")
@@ -170,7 +173,7 @@ model Reviews {
   updatedAt DateTime @updatedAt
 
   booking Bookings      @relation(fields: [bookingId], references: [id])
-  // student Users         @relation(fields: [studenId], references: [id], onDelete: Cascade)
+  student Users         @relation(fields: [studenId], references: [id], onDelete: Cascade)
   tutor   TutorProfiles @relation(fields: [tutorId], references: [id])
 
   @@index([bookingId])

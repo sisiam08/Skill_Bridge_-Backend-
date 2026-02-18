@@ -51,7 +51,7 @@ const getProfileById = async (req: Request, res: Response) => {
 };
 
 const updateProfile = async (req: Request, res: Response) => {
-  try {    
+  try {
     const id = req.params.id as string;
     const data = await TutorProfileServices.updateProfile(id, req.body);
     res.status(200).json({
@@ -82,10 +82,58 @@ const deleteProfile = async (req: Request, res: Response) => {
   }
 };
 
+const setAvailability = async (req: Request, res: Response) => {
+  try {
+    const tutorId = req.params.tutorId as string;
+    const availability = req.body;
+
+    console.log(tutorId);
+
+    const data = await TutorProfileServices.setAvailability(
+      tutorId,
+      availability,
+    );
+
+    res.status(201).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to set availability",
+    });
+  }
+};
+
+const updateAvailability = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const availability = req.body;
+
+    const data = await TutorProfileServices.updateAvailability(
+      id,
+      availability,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update availability",
+    });
+  }
+};
+
 export const TutorProfileController = {
   createProfile,
   getAllProfiles,
   getProfileById,
   updateProfile,
   deleteProfile,
+  setAvailability,
+  updateAvailability,
 };

@@ -10,7 +10,9 @@ const createCategory = async (categoryData: Omit<Categories, "id">) => {
 };
 
 const getAllCategories = async () => {
-  const data = await prisma.categories.findMany();
+  const data = await prisma.categories.findMany({
+    where: { isActive: true },
+  });
   return data;
 };
 
