@@ -94,7 +94,6 @@ model TutorProfiles {
   userId          String     @unique
   categoriesId    String
   bio             String?    @db.VarChar(255)
-  availability    Json?
   hourlyRate      Float      @default(0.00)
   experienceYears Int
   averagerating   Float      @default(0)
@@ -105,10 +104,21 @@ model TutorProfiles {
   reviews         Reviews[]
 
   // user     Users      @relation(fields: [userId], references: [id])
-  category Categories @relation(fields: [categoriesId], references: [id])
+  category     Categories          @relation(fields: [categoriesId], references: [id])
+  availability TutorAvailability[]
 
   @@index([userId])
   @@map("tutorProfiles")
+}
+
+model TutorAvailability {
+  id        String @id @default(uuid())
+  tutorId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  tutor TutorProfiles @relation(fields: [tutorId], references: [id], onDelete: Cascade)
 }
 
 model Categories {
@@ -145,6 +155,7 @@ model Bookings {
   // student Users         @relation(fields: [studentId], references: [id], onDelete: Cascade)
   tutor TutorProfiles @relation(fields: [tutorid], references: [id])
 
+  @@index([id])
   @@map("bookings")
 }
 

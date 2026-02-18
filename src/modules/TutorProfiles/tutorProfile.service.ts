@@ -1,3 +1,7 @@
+import {
+  TutorAvailability,
+  TutorProfiles,
+} from "../../../generated/prisma/client";
 import { TutorProfilesCreateInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
@@ -32,7 +36,15 @@ const getProfileById = async (id: string) => {
 
 const updateProfile = async (
   id: string,
-  tutorData: TutorProfilesCreateInput,
+  tutorData: Omit<
+    TutorProfiles,
+    | "id"
+    | "userId"
+    | "categoriesId"
+    | "createdAt"
+    | "updatedAt"
+    | "availability"
+  >,
 ) => {
   const result = await prisma.tutorProfiles.update({
     where: { id },
@@ -44,6 +56,8 @@ const updateProfile = async (
 
   return result;
 };
+
+
 
 const deleteProfile = async (id: string) => {
   const result = await prisma.tutorProfiles.delete({
