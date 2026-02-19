@@ -7,35 +7,34 @@ datasource db {
   provider = "postgresql"
 }
 
-// enum UserRole {
-//   STUDENT
-//   TUTOR
-//   ADMIN
-// }
+enum UserRole {
+  STUDENT
+  TUTOR
+  ADMIN
+}
 
-// enum UserStatus {
-//   ACTIVE
-//   INACTIVE
-// }
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
 
-model Users {
+model User {
   id            String    @id
   name          String
   email         String
   emailVerified Boolean   @default(false)
-  profileImage  String?
+  image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
 
-  role   String
+  role   UserRole    @default(STUDENT)
   phone  String?
-  status String? @default("ACTIVE")
+  status UserStatus? @default(ACTIVE)
 
-  tutorProfiles TutorProfiles?
-  bookings      Bookings[]
-  reviews       Reviews[]
+  tutorProfile TutorProfiles?
+  bookings     Bookings[]
 
   @@unique([email])
   @@map("users")
@@ -50,7 +49,7 @@ model Session {
   ipAddress String?
   userAgent String?
   userId    String
-  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
   @@index([userId])
@@ -62,7 +61,7 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -103,7 +102,7 @@ model TutorProfiles {
   bookings        Bookings[]
   reviews         Reviews[]
 
-  user         Users               @relation(fields: [userId], references: [id])
+  user         User               @relation(fields: [userId], references: [id])
   category     Categories          @relation(fields: [categoriesId], references: [id])
   availability TutorAvailability[]
 
@@ -155,8 +154,8 @@ model Bookings {
 
   reviews Reviews?
 
-  student Users         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  tutor   TutorProfiles @relation(fields: [tutorid], references: [id])
+  student User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tutor TutorProfiles @relation(fields: [tutorid], references: [id])
 
   @@index([id])
   @@map("bookings")
@@ -173,7 +172,6 @@ model Reviews {
   updatedAt DateTime @updatedAt
 
   booking Bookings      @relation(fields: [bookingId], references: [id])
-  student Users         @relation(fields: [studenId], references: [id], onDelete: Cascade)
   tutor   TutorProfiles @relation(fields: [tutorId], references: [id])
 
   @@index([bookingId])

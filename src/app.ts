@@ -1,9 +1,9 @@
 import express, { Application } from "express";
+import { TutorProfileRouters } from "./modules/TutorProfiles/tutorProfile.router";
+import { CategoryRouters } from "./modules/Categories/category.router";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
-import { TutorProfileRouters } from "./modules/TutorProfiles/tutorProfile.router";
 import cors from "cors";
-import { CategoryRouters } from "./modules/Categories/category.router";
 
 const app: Application = express();
 
@@ -13,9 +13,10 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
+
+app.use(express.json());
 
 app.use("/api/tutors", TutorProfileRouters);
 app.use("/api/categories", CategoryRouters);

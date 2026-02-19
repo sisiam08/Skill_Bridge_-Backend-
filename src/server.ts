@@ -13,7 +13,7 @@ async function main() {
     });
   } catch (error) {
     console.log("An error occurred: ", error);
-    await prisma.$disconnect;
+    await prisma.$disconnect();
     process.exit(1);
   }
 }
