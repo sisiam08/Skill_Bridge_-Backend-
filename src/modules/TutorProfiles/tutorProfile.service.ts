@@ -1,14 +1,16 @@
-import { TutorAvailability } from "../../../generated/prisma/client";
+import { SortOrder } from "../../../generated/prisma/internal/prismaNamespace";
 import {
   TutorAvailabilityUpdateInput,
   TutorProfilesCreateInput,
   TutorProfilesUpdateInput,
 } from "../../../generated/prisma/models";
+import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
   minutesToTime,
   subtractBookedFromFreeSlots,
+  timeDuration,
   timeToMinutes,
-} from "../../helpers/TimeConversion";
+} from "../../helpers/TimeHelpers";
 import { prisma } from "../../lib/prisma";
 
 const createProfile = async (tutorData: TutorProfilesCreateInput) => {
@@ -68,8 +70,17 @@ const deleteProfile = async (id: string) => {
 
 const setAvailability = async (
   userId: string,
-  availability: Omit<TutorAvailability, "id" | "tutorId">,
+  availability: { dayOfWeek: number; startTime: string; endTime: string },
 ) => {
+  const { dayOfWeek, startTime, endTime } = availability;
+
+  const StartMin = timeToMinutes(startTime);
+  const EndMin = timeToMinutes(endTime);
+
+  if (EndMin <= StartMin) {
+    throw new Error("Invalid time range");
+  }
+
   const tutorProfile = await prisma.tutorProfiles.findUnique({
     where: { userId },
     select: { id: true },
@@ -106,16 +117,18 @@ const getAvailableSlots = async (
 ) => {
   const date = new Date(selectedDate);
   const dayOfWeek = date.getDay();
-  const hours = slotDuration / 60;
 
-  const tutorProfile = await prisma.tutorProfiles.findUnique({
-    where: { id: tutorId },
-    select: { hourlyRate: true },
+  const availabilitySlots = await prisma.tutorAvailability.findMany({
+    where: {
+      tutorId,
+      dayOfWeek,
+      isActive: true,
+    },
   });
 
-  const price = tutorProfile?.hourlyRate
-    ? hours * tutorProfile.hourlyRate
-    : 0.0;
+  if (!availabilitySlots.length) {
+    throw new Error("Tutor not available on this day");
+  }
 
   const tutorSlots = await prisma.tutorAvailability.findMany({
     where: {
@@ -162,6 +175,23 @@ const getAvailableSlots = async (
       }
     });
   });
+
+  availableSlots.sort((a, b) => {
+    const aStart = timeToMinutes(a.startTime);
+    const bStart = timeToMinutes(b.startTime);
+    return aStart - bStart;
+  });
+
+  const tutor = await prisma.tutorProfiles.findUnique({
+    where: { id: tutorId },
+    select: { hourlyRate: true },
+  });
+
+  if (!tutor) {
+    throw new Error("Tutor not found");
+  }
+
+  const price = calculateTutionPrice(slotDuration, tutor.hourlyRate);
 
   return { dayOfWeek, availableSlots, price };
 };

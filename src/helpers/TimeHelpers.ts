@@ -12,6 +12,12 @@ export const minutesToTime = (minutes: number) => {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 };
 
+export const timeDuration = (startTime: string, endTime: string) => {
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+  return endMinutes - startMinutes;
+};
+
 export const subtractBookedFromFreeSlots = (
   availableSlot: { startTime: string; endTime: string },
   booked: { startTime: string; endTime: string }[],
@@ -49,4 +55,38 @@ export const subtractBookedFromFreeSlots = (
     });
   });
   return freeRanges;
+};
+
+export const fitsInAvailabilitySlot = (
+  newBooking: { startTime: string; endTime: string },
+  availabilitySlots: { startTime: string; endTime: string }[],
+) => {
+  const bookingStart = timeToMinutes(newBooking.startTime);
+  const bookingEnd = timeToMinutes(newBooking.endTime);
+
+  if (bookingEnd <= bookingStart) {
+    throw new Error("Invalid time range");
+  }
+
+  return availabilitySlots.some((slot) => {
+    const slotStart = timeToMinutes(slot.startTime);
+    const slotEnd = timeToMinutes(slot.endTime);
+
+    return bookingStart >= slotStart && bookingEnd <= slotEnd;
+  });
+};
+
+export const isOverlapping = (
+  newBooking: { startTime: string; endTime: string },
+  existingBookings: { startTime: string; endTime: string }[],
+) => {
+  const newStart = timeToMinutes(newBooking.startTime);
+  const newEnd = timeToMinutes(newBooking.endTime);
+
+  return existingBookings.some((eb) => {
+    const existingStart = timeToMinutes(eb.startTime);
+    const existingEnd = timeToMinutes(eb.endTime);
+
+    return newStart < existingEnd && newEnd > existingStart;
+  });
 };

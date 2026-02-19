@@ -10,12 +10,10 @@ const createBooking = async (req: Request, res: Response) => {
       });
     }
     const studentId = req.user.id;
-    const { tutorId } = req.params;
     const bookingData = req.body;
 
     const data = await BookingService.createBooking(
       studentId as string,
-      tutorId as string,
       bookingData,
     );
 
