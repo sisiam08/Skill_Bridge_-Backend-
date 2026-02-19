@@ -6,4 +6,8 @@ const router = express.Router();
 
 router.post("/", auth_middleware(["STUDENT"]), BookingController.createBooking);
 
+router.get("/", auth_middleware(["STUDENT"]), BookingController.getBookings);
+
+router.get("/:id", auth_middleware(["STUDENT"]), BookingController.getBookingDetails);
+
 export const BookingRouters = router;

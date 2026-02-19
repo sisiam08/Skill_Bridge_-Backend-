@@ -1,6 +1,3 @@
-import { Bookings } from "../../../generated/prisma/client";
-import { BookingsCreateInput } from "../../../generated/prisma/models";
-import { timeToMinutes } from "../../helpers/TimeConversion";
 import { prisma } from "../../lib/prisma";
 
 const createBooking = async (
@@ -38,7 +35,16 @@ const getBookings = async (studentId: string) => {
   });
 };
 
+const getBookingDetails = async (bookingId: string) => {
+  return await prisma.bookings.findUnique({
+    where: {
+      id: bookingId,
+    },
+  });
+};
+
 export const BookingService = {
   createBooking,
   getBookings,
+  getBookingDetails,
 };
