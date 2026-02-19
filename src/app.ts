@@ -4,6 +4,7 @@ import { CategoryRouters } from "./modules/Categories/category.router";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import cors from "cors";
+import { UserRouters } from "./modules/Users/user.router";
 
 const app: Application = express();
 
@@ -18,6 +19,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
 
+app.use("/api/admin", UserRouters);
 app.use("/api/tutors", TutorProfileRouters);
 app.use("/api/categories", CategoryRouters);
 
