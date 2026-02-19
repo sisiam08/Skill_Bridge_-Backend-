@@ -143,10 +143,10 @@ enum BookingStatus {
 model Bookings {
   id          String        @id @default(uuid())
   studentId   String
-  tutorid     String
+  tutorId     String
   sessionDate DateTime
-  startTime   DateTime
-  endTime     DateTime
+  startTime   String
+  endTime     String
   price       Float
   status      BookingStatus @default(CONFIRMED)
   createdAt   DateTime      @default(now())
@@ -155,7 +155,7 @@ model Bookings {
   reviews Reviews?
 
   student User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  tutor   TutorProfiles @relation(fields: [tutorid], references: [id])
+  tutor   TutorProfiles @relation(fields: [tutorId], references: [id])
 
   @@index([id])
   @@map("bookings")

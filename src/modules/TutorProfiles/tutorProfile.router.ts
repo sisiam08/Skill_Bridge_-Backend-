@@ -43,7 +43,13 @@ router.post(
 router.get(
   "/:id/availability",
   auth_middleware(["ADMIN", "STUDENT", "TUTOR"]),
-  TutorProfileController.getAvailabilityByTutorId,
+  TutorProfileController.getAvailability,
+);
+
+router.get(
+  "/:id/availableSlots",
+  auth_middleware(["STUDENT"]),
+  TutorProfileController.getAvailableSlots,
 );
 
 router.patch(

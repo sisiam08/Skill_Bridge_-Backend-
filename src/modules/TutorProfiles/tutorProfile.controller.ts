@@ -104,11 +104,20 @@ const setAvailability = async (req: Request, res: Response) => {
   }
 };
 
-const getAvailabilityByTutorId = async (req: Request, res: Response) => {
+const getAvailability = async (req: Request, res: Response) => {
   try {
     const tutorId = req.params.id as string;
 
-    const data = await TutorProfileServices.getAvailabilityByTutorId(tutorId);
+    const tutorProfile = await TutorProfileServices.getProfileById(tutorId);
+
+    if (req.user?.role === "TUTOR" && req.user?.id !== tutorProfile?.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You dont have permission to view other tutor's availability",
+      });
+    }
+
+    const data = await TutorProfileServices.getAvailability(tutorId);
 
     res.status(200).json({
       success: true,
@@ -118,6 +127,29 @@ const getAvailabilityByTutorId = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get availability",
+    });
+  }
+};
+
+const getAvailableSlots = async (req: Request, res: Response) => {
+  try {
+    const tutorId = req.params.id as string;
+    const { selectedDate, slotDuration } = req.query;
+
+    const data = await TutorProfileServices.getAvailableSlots(
+      tutorId,
+      selectedDate as string,
+      Number(slotDuration),
+    );
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get available slots",
     });
   }
 };
@@ -151,6 +183,7 @@ export const TutorProfileController = {
   updateProfile,
   deleteProfile,
   setAvailability,
-  getAvailabilityByTutorId,
+  getAvailability,
+  getAvailableSlots,
   updateAvailability,
 };

@@ -4,6 +4,11 @@ import {
   TutorProfilesCreateInput,
   TutorProfilesUpdateInput,
 } from "../../../generated/prisma/models";
+import {
+  minutesToTime,
+  subtractBookedFromFreeSlots,
+  timeToMinutes,
+} from "../../helpers/TimeConversion";
 import { prisma } from "../../lib/prisma";
 
 const createProfile = async (tutorData: TutorProfilesCreateInput) => {
@@ -86,12 +91,79 @@ const setAvailability = async (
   return result;
 };
 
-const getAvailabilityByTutorId = async (tutorId: string) => {
+const getAvailability = async (tutorId: string) => {
   const result = await prisma.tutorAvailability.findMany({
     where: { tutorId },
   });
 
   return result;
+};
+
+const getAvailableSlots = async (
+  tutorId: string,
+  selectedDate: string,
+  slotDuration: number,
+) => {
+  const date = new Date(selectedDate);
+  const dayOfWeek = date.getDay();
+  const hours = slotDuration / 60;
+
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { id: tutorId },
+    select: { hourlyRate: true },
+  });
+
+  const price = tutorProfile?.hourlyRate
+    ? hours * tutorProfile.hourlyRate
+    : 0.0;
+
+  const tutorSlots = await prisma.tutorAvailability.findMany({
+    where: {
+      tutorId,
+      dayOfWeek,
+      isActive: true,
+    },
+    orderBy: { startTime: "asc" },
+  });
+
+  const bookedSlots = await prisma.bookings.findMany({
+    where: {
+      tutorId,
+      sessionDate: date,
+    },
+    select: {
+      startTime: true,
+      endTime: true,
+    },
+  });
+
+  let availableSlots: { startTime: string; endTime: string }[] = [];
+
+  tutorSlots.forEach((slot) => {
+    const freeRanges = subtractBookedFromFreeSlots(
+      { startTime: slot.startTime, endTime: slot.endTime },
+      bookedSlots,
+    );
+    freeRanges.forEach((freeSlot) => {
+      const freeStartMin = timeToMinutes(freeSlot.startTime);
+      const freeEndMin = timeToMinutes(freeSlot.endTime);
+
+      let currentStart = freeStartMin;
+
+      while (currentStart + slotDuration <= freeEndMin) {
+        const endMin = currentStart + slotDuration;
+
+        availableSlots.push({
+          startTime: minutesToTime(currentStart),
+          endTime: minutesToTime(endMin),
+        });
+
+        currentStart = currentStart + 60;
+      }
+    });
+  });
+
+  return { dayOfWeek, availableSlots, price };
 };
 
 const updateAvailability = async (
@@ -113,6 +185,7 @@ export const TutorProfileServices = {
   updateProfile,
   deleteProfile,
   setAvailability,
-  getAvailabilityByTutorId,
+  getAvailability,
+  getAvailableSlots,
   updateAvailability,
 };
