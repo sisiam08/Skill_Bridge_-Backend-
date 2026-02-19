@@ -29,7 +29,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role   UserRole    @default(STUDENT)
+  role   UserRole
   phone  String?
   status UserStatus? @default(ACTIVE)
 
@@ -37,7 +37,7 @@ model User {
   bookings     Bookings[]
 
   @@unique([email])
-  @@map("users")
+  @@map("user")
 }
 
 model Session {
@@ -102,7 +102,7 @@ model TutorProfiles {
   bookings        Bookings[]
   reviews         Reviews[]
 
-  user         User               @relation(fields: [userId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
   category     Categories          @relation(fields: [categoriesId], references: [id])
   availability TutorAvailability[]
 
@@ -154,8 +154,8 @@ model Bookings {
 
   reviews Reviews?
 
-  student User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  tutor TutorProfiles @relation(fields: [tutorid], references: [id])
+  student User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tutor   TutorProfiles @relation(fields: [tutorid], references: [id])
 
   @@index([id])
   @@map("bookings")

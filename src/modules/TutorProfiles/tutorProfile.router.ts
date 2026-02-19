@@ -1,21 +1,55 @@
 import { Router } from "express";
 import { TutorProfileController } from "./tutorProfile.controller";
+import { auth_middleware } from "../../middleware/auth";
 
 const router = Router();
 
-router.post("/", TutorProfileController.createProfile);
+router.post(
+  "/",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.createProfile,
+);
 
-router.get("/", TutorProfileController.getAllProfiles);
+router.get(
+  "/",
+  auth_middleware(["ADMIN", "STUDENT"]),
+  TutorProfileController.getAllProfiles,
+);
 
-router.get("/:id", TutorProfileController.getProfileById);
+router.get(
+  "/:id",
+  auth_middleware(["ADMIN", "STUDENT"]),
+  TutorProfileController.getProfileById,
+);
 
-router.patch("/:id", TutorProfileController.updateProfile);
+router.patch(
+  "/:id",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.updateProfile,
+);
 
-router.delete("/:id", TutorProfileController.deleteProfile);
+router.delete(
+  "/:id",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.deleteProfile,
+);
 
-router.post("/:id/availability", TutorProfileController.setAvailability);
+router.post(
+  "/availability",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.setAvailability,
+);
 
-router.patch("/availability/:id", TutorProfileController.updateAvailability);
+router.get(
+  "/:id/availability",
+  auth_middleware(["ADMIN", "STUDENT", "TUTOR"]),
+  TutorProfileController.getAvailabilityByTutorId,
+);
 
+router.patch(
+  "/availability/:id",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.updateAvailability,
+);
 
 export const TutorProfileRouters: Router = router;

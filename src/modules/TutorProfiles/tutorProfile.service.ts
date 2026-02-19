@@ -17,6 +17,7 @@ const createProfile = async (tutorData: TutorProfilesCreateInput) => {
 const getAllProfiles = async () => {
   const result = await prisma.tutorProfiles.findMany({
     include: {
+      user: true,
       category: true,
     },
   });
@@ -28,6 +29,7 @@ const getProfileById = async (id: string) => {
   const result = await prisma.tutorProfiles.findUnique({
     where: { id },
     include: {
+      user: true,
       category: true,
     },
   });
@@ -43,6 +45,7 @@ const updateProfile = async (
     where: { id },
     data: tutorData,
     include: {
+      user: true,
       category: true,
     },
   });
@@ -59,14 +62,33 @@ const deleteProfile = async (id: string) => {
 };
 
 const setAvailability = async (
-  tutorId: string,
+  userId: string,
   availability: Omit<TutorAvailability, "id" | "tutorId">,
 ) => {
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!tutorProfile) {
+    throw new Error("Tutor profile not found");
+  }
+
+  const tutorId = tutorProfile.id;
+
   const result = await prisma.tutorAvailability.create({
     data: {
       tutorId,
       ...availability,
     },
+  });
+
+  return result;
+};
+
+const getAvailabilityByTutorId = async (tutorId: string) => {
+  const result = await prisma.tutorAvailability.findMany({
+    where: { tutorId },
   });
 
   return result;
@@ -91,5 +113,6 @@ export const TutorProfileServices = {
   updateProfile,
   deleteProfile,
   setAvailability,
+  getAvailabilityByTutorId,
   updateAvailability,
 };

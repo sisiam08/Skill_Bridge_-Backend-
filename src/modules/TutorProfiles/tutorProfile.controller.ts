@@ -84,13 +84,11 @@ const deleteProfile = async (req: Request, res: Response) => {
 
 const setAvailability = async (req: Request, res: Response) => {
   try {
-    const tutorId = req.params.tutorId as string;
+    const userId = req.user?.id as string;
     const availability = req.body;
 
-    console.log(tutorId);
-
     const data = await TutorProfileServices.setAvailability(
-      tutorId,
+      userId,
       availability,
     );
 
@@ -102,6 +100,24 @@ const setAvailability = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to set availability",
+    });
+  }
+};
+
+const getAvailabilityByTutorId = async (req: Request, res: Response) => {
+  try {
+    const tutorId = req.params.id as string;
+
+    const data = await TutorProfileServices.getAvailabilityByTutorId(tutorId);
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get availability",
     });
   }
 };
@@ -135,5 +151,6 @@ export const TutorProfileController = {
   updateProfile,
   deleteProfile,
   setAvailability,
+  getAvailabilityByTutorId,
   updateAvailability,
 };

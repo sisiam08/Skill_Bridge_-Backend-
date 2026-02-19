@@ -7,13 +7,11 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   trustedOrigins: [process.env.APP_URL || "http://localhost:3000"],
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
-  users: {
+  user: {
     additionalFields: {
       role: {
         type: "string",
-        required: false,
+        required: true,
       },
       phone: {
         type: "string",
@@ -21,11 +19,21 @@ export const auth = betterAuth({
       },
       status: {
         type: "string",
+        defaultValue: "ACTIVE",
         required: false,
       },
     },
   },
   emailAndPassword: {
     enabled: true,
+  },
+
+  socialProviders: {
+    google: {
+      prompt: "select_account consent",
+      accessType: "offline",
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
   },
 });
