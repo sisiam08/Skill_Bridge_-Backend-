@@ -1,3 +1,4 @@
+import { get } from "node:http";
 import { SortOrder } from "../../../generated/prisma/internal/prismaNamespace";
 import {
   TutorAvailabilityUpdateInput,
@@ -6,10 +7,12 @@ import {
 } from "../../../generated/prisma/models";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
+  isOverlapping,
   minutesToTime,
   subtractBookedFromFreeSlots,
   timeDuration,
   timeToMinutes,
+  validateBookingDateTime,
 } from "../../helpers/TimeHelpers";
 import { prisma } from "../../lib/prisma";
 
@@ -92,6 +95,17 @@ const setAvailability = async (
 
   const tutorId = tutorProfile.id;
 
+  const exixtingSlots = await prisma.tutorAvailability.findMany({
+    where: {
+      tutorId,
+      dayOfWeek,
+    },
+  });
+
+  if (isOverlapping({ startTime, endTime }, exixtingSlots)) {
+    throw new Error("Overlapping availability slots");
+  }
+
   const result = await prisma.tutorAvailability.create({
     data: {
       tutorId,
@@ -105,6 +119,7 @@ const setAvailability = async (
 const getAvailability = async (tutorId: string) => {
   const result = await prisma.tutorAvailability.findMany({
     where: { tutorId },
+    orderBy: [{ dayOfWeek: "asc" }, { startTime: "desc" }],
   });
 
   return result;
@@ -117,6 +132,8 @@ const getAvailableSlots = async (
 ) => {
   const date = new Date(selectedDate);
   const dayOfWeek = date.getDay();
+
+  validateBookingDateTime(date);
 
   const availabilitySlots = await prisma.tutorAvailability.findMany({
     where: {
@@ -152,14 +169,28 @@ const getAvailableSlots = async (
 
   let availableSlots: { startTime: string; endTime: string }[] = [];
 
+  const now = new Date();
+
+  const isToday = date.toDateString() === now.toDateString();
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
   tutorSlots.forEach((slot) => {
     const freeRanges = subtractBookedFromFreeSlots(
       { startTime: slot.startTime, endTime: slot.endTime },
       bookedSlots,
     );
     freeRanges.forEach((freeSlot) => {
-      const freeStartMin = timeToMinutes(freeSlot.startTime);
-      const freeEndMin = timeToMinutes(freeSlot.endTime);
+      let freeStartMin = timeToMinutes(freeSlot.startTime);
+      let freeEndMin = timeToMinutes(freeSlot.endTime);
+
+      if (isToday) {
+        if (freeEndMin <= currentMinutes) {
+          return;
+        } else if (freeStartMin < currentMinutes) {
+          freeStartMin = currentMinutes;
+        }
+      }
 
       let currentStart = freeStartMin;
 
@@ -208,6 +239,17 @@ const updateAvailability = async (
   return result;
 };
 
+const getBookingsForTutor = async (tutorId: string) => {
+
+  const result = await prisma.bookings.findMany({
+    where: { tutorId },
+    include: {
+      student: true,
+    },
+  });
+  return result;
+};
+
 export const TutorProfileServices = {
   createProfile,
   getAllProfiles,
@@ -218,4 +260,5 @@ export const TutorProfileServices = {
   getAvailability,
   getAvailableSlots,
   updateAvailability,
+  getBookingsForTutor,
 };

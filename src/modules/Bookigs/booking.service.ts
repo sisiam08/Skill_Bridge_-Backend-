@@ -3,6 +3,7 @@ import {
   fitsInAvailabilitySlot,
   isOverlapping,
   timeDuration,
+  validateBookingDateTime,
 } from "../../helpers/TimeHelpers";
 import { prisma } from "../../lib/prisma";
 
@@ -21,6 +22,8 @@ const createBooking = async (
     const date = new Date(sessionDate);
     const dayOfWeek = date.getDay();
     const slotDuration = timeDuration(startTime, endTime);
+
+    validateBookingDateTime(date, startTime);
 
     const availabilitySlots = await tx.tutorAvailability.findMany({
       where: {

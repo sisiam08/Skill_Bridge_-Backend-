@@ -58,4 +58,10 @@ router.patch(
   TutorProfileController.updateAvailability,
 );
 
+router.get(
+  "/:id/bookings",
+  auth_middleware(["TUTOR"]),
+  TutorProfileController.getBookingsForTutor,
+);
+
 export const TutorProfileRouters: Router = router;

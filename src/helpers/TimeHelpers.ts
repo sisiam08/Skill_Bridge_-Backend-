@@ -1,3 +1,5 @@
+import { start } from "node:repl";
+
 export const timeToMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
   if (h === undefined || m === undefined) {
@@ -89,4 +91,39 @@ export const isOverlapping = (
 
     return newStart < existingEnd && newEnd > existingStart;
   });
+};
+
+export const validateBookingDateTime = (
+  sessionDate?: Date,
+  startTime?: string,
+) => {
+  const now = new Date();
+
+  if (sessionDate) {
+    const bookingDate = sessionDate;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const bookingDay = new Date(bookingDate);
+    bookingDay.setHours(0, 0, 0, 0);
+
+    if (bookingDay < today) {
+      throw new Error("Cannot see/book previous date slot!");
+    }
+
+    if (startTime) {
+      if (bookingDay.getTime() === today.getTime()) {
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const bookingStartMinutes = timeToMinutes(startTime);
+
+        if (bookingStartMinutes < currentMinutes) {
+          throw new Error("Cannot see/book previous slot!");
+        }
+      }
+    }
+  }
+
+  return true;
 };
