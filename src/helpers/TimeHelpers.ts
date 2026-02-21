@@ -1,4 +1,3 @@
-import { start } from "node:repl";
 
 export const timeToMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);

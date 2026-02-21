@@ -1,67 +1,64 @@
 import { Router } from "express";
-import { TutorProfileController } from "./tutorProfile.controller";
+import { TutorProfileControllers } from "./tutorProfile.controller";
 import { auth_middleware } from "../../middleware/auth";
+import { UserRole } from "../../../generated/prisma/enums";
 
 const router = Router();
 
 router.post(
   "/",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.createProfile,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.createProfile,
 );
 
-router.get(
-  "/",
-  auth_middleware(["ADMIN", "STUDENT"]),
-  TutorProfileController.getAllProfiles,
-);
+router.get("/", TutorProfileControllers.getAllProfiles);
 
 router.get(
   "/:id",
-  auth_middleware(["ADMIN", "STUDENT"]),
-  TutorProfileController.getProfileById,
+  auth_middleware([UserRole.ADMIN, UserRole.STUDENT]),
+  TutorProfileControllers.getProfileById,
 );
 
 router.patch(
   "/:id",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.updateProfile,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.updateProfile,
 );
 
 router.delete(
   "/:id",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.deleteProfile,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.deleteProfile,
 );
 
 router.post(
   "/availability",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.setAvailability,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.setAvailability,
 );
 
 router.get(
   "/:id/availability",
-  auth_middleware(["ADMIN", "STUDENT", "TUTOR"]),
-  TutorProfileController.getAvailability,
+  auth_middleware([UserRole.ADMIN, UserRole.STUDENT, UserRole.TUTOR]),
+  TutorProfileControllers.getAvailability,
 );
 
 router.get(
   "/:id/availableSlots",
-  auth_middleware(["STUDENT"]),
-  TutorProfileController.getAvailableSlots,
+  auth_middleware([UserRole.STUDENT]),
+  TutorProfileControllers.getAvailableSlots,
 );
 
 router.patch(
   "/availability/:id",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.updateAvailability,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.updateAvailability,
 );
 
 router.get(
   "/:id/bookings",
-  auth_middleware(["TUTOR"]),
-  TutorProfileController.getBookingsForTutor,
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getMeetingHistory,
 );
 
 export const TutorProfileRouters: Router = router;

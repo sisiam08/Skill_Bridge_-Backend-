@@ -1,5 +1,3 @@
-import { get } from "node:http";
-import { SortOrder } from "../../../generated/prisma/internal/prismaNamespace";
 import {
   TutorAvailabilityUpdateInput,
   TutorProfilesCreateInput,
@@ -10,7 +8,6 @@ import {
   isOverlapping,
   minutesToTime,
   subtractBookedFromFreeSlots,
-  timeDuration,
   timeToMinutes,
   validateBookingDateTime,
 } from "../../helpers/TimeHelpers";
@@ -239,8 +236,7 @@ const updateAvailability = async (
   return result;
 };
 
-const getBookingsForTutor = async (tutorId: string) => {
-
+const getMeetingHistory = async (tutorId: string) => {
   const result = await prisma.bookings.findMany({
     where: { tutorId },
     include: {
@@ -260,5 +256,5 @@ export const TutorProfileServices = {
   getAvailability,
   getAvailableSlots,
   updateAvailability,
-  getBookingsForTutor,
+  getMeetingHistory,
 };

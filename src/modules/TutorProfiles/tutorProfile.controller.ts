@@ -176,7 +176,7 @@ const updateAvailability = async (req: Request, res: Response) => {
   }
 };
 
-const getBookingsForTutor = async (req: Request, res: Response) => {
+const getMeetingHistory = async (req: Request, res: Response) => {
   try {
     const tutorId = req.params.id as string;
 
@@ -185,13 +185,12 @@ const getBookingsForTutor = async (req: Request, res: Response) => {
     if (req.user?.role === "TUTOR" && req.user?.id !== tutorProfile?.user.id) {
       return res.status(403).json({
         success: false,
-        message: "You dont have permission to view other tutor's meeting history",
+        message:
+          "You dont have permission to view other tutor's meeting history",
       });
     }
 
-    const data = await TutorProfileServices.getBookingsForTutor(
-      tutorId,
-    );
+    const data = await TutorProfileServices.getMeetingHistory(tutorId);
     res.status(200).json({
       success: true,
       data: data,
@@ -204,7 +203,7 @@ const getBookingsForTutor = async (req: Request, res: Response) => {
   }
 };
 
-export const TutorProfileController = {
+export const TutorProfileControllers = {
   createProfile,
   getAllProfiles,
   getProfileById,
@@ -214,5 +213,5 @@ export const TutorProfileController = {
   getAvailability,
   getAvailableSlots,
   updateAvailability,
-  getBookingsForTutor,
+  getMeetingHistory,
 };

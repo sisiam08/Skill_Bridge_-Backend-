@@ -1,13 +1,26 @@
 import express from "express";
-import { BookingController } from "./booking.controller";
+import { BookingControllers } from "./booking.controller";
 import { auth_middleware } from "../../middleware/auth";
+import { UserRole } from "../../../generated/prisma/client";
 
 const router = express.Router();
 
-router.post("/", auth_middleware(["STUDENT"]), BookingController.createBooking);
+router.post(
+  "/",
+  auth_middleware([UserRole.STUDENT]),
+  BookingControllers.createBooking,
+);
 
-router.get("/", auth_middleware(["STUDENT"]), BookingController.getBookings);
+router.get(
+  "/",
+  auth_middleware([UserRole.STUDENT]),
+  BookingControllers.getBookings,
+);
 
-router.get("/:id", auth_middleware(["STUDENT"]), BookingController.getBookingDetails);
+router.get(
+  "/:id",
+  auth_middleware([UserRole.STUDENT]),
+  BookingControllers.getBookingDetails,
+);
 
 export const BookingRouters = router;

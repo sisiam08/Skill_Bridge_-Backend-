@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { BookingService } from "./booking.service";
+import { BookingServices } from "./booking.service";
 
 const createBooking = async (req: Request, res: Response) => {
   try {
@@ -12,7 +12,7 @@ const createBooking = async (req: Request, res: Response) => {
     const studentId = req.user.id;
     const bookingData = req.body;
 
-    const data = await BookingService.createBooking(
+    const data = await BookingServices.createBooking(
       studentId as string,
       bookingData,
     );
@@ -40,7 +40,7 @@ const getBookings = async (req: Request, res: Response) => {
     }
 
     const studentId = req.user.id;
-    const bookings = await BookingService.getBookings(studentId);
+    const bookings = await BookingServices.getBookings(studentId);
 
     return res.status(200).json({
       success: true,
@@ -58,7 +58,7 @@ const getBookings = async (req: Request, res: Response) => {
 const getBookingDetails = async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
-    const bookingDetails = await BookingService.getBookingDetails(
+    const bookingDetails = await BookingServices.getBookingDetails(
       bookingId as string,
     );
 
@@ -82,7 +82,7 @@ const getBookingDetails = async (req: Request, res: Response) => {
   }
 };
 
-export const BookingController = {
+export const BookingControllers = {
   createBooking,
   getBookings,
   getBookingDetails,

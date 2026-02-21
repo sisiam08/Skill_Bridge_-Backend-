@@ -6,6 +6,10 @@ import { auth } from "./lib/auth";
 import cors from "cors";
 import { UserRouters } from "./modules/Users/user.router";
 import { BookingRouters } from "./modules/Bookigs/booking.router";
+import { ReviewRouters } from "./modules/Reviews/review.router";
+import { notFound } from "./middleware/notFound";
+import { error } from "node:console";
+import errorHandler from "./middleware/globalErrorHandler";
 
 const app: Application = express();
 
@@ -24,9 +28,13 @@ app.use("/api/admin", UserRouters);
 app.use("/api/tutors", TutorProfileRouters);
 app.use("/api/categories", CategoryRouters);
 app.use("/api/bookings", BookingRouters);
+app.use("/api/reviews", ReviewRouters);
 
 app.get("/", (req, res) => {
   res.send("Skill Bridge");
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

@@ -100,7 +100,6 @@ model TutorProfiles {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   bookings        Bookings[]
-  reviews         Reviews[]
 
   user         User                @relation(fields: [userId], references: [id])
   category     Categories          @relation(fields: [categoriesId], references: [id])
@@ -164,15 +163,12 @@ model Bookings {
 model Reviews {
   id        String   @id @default(uuid())
   bookingId String   @unique
-  studenId  String
-  tutorId   String
   rating    Int
   comment   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   booking Bookings      @relation(fields: [bookingId], references: [id])
-  tutor   TutorProfiles @relation(fields: [tutorId], references: [id])
 
   @@index([bookingId])
   @@map("reviews")

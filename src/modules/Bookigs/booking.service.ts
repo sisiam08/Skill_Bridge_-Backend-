@@ -87,6 +87,9 @@ const getBookings = async (studentId: string) => {
     where: {
       studentId: studentId,
     },
+    include: {
+      reviews: true,
+    },
   });
 };
 
@@ -98,7 +101,7 @@ const getBookingDetails = async (bookingId: string) => {
   });
 };
 
-export const BookingService = {
+export const BookingServices = {
   createBooking,
   getBookings,
   getBookingDetails,
