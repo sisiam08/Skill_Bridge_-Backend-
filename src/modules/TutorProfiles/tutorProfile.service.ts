@@ -1,3 +1,5 @@
+import { number, string } from "better-auth/*";
+import { BookingStatus } from "../../../generated/prisma/enums";
 import {
   TutorAvailabilityUpdateInput,
   TutorProfilesCreateInput,
@@ -21,15 +23,99 @@ const createProfile = async (tutorData: TutorProfilesCreateInput) => {
   return result;
 };
 
-const getAllProfiles = async () => {
+const getAllProfiles = async (
+  search?: string | undefined,
+  page?: number,
+  limit?: number,
+  skip?: number,
+  sortBy?: string,
+  sortOrder?: string,
+) => {
+  const andConsditions: any[] = [];
+
+  if (search) {
+    search = search.trim();
+
+    const numberSearch = Number(search);
+
+    if (Number.isNaN(numberSearch)) {
+      andConsditions.push({
+        OR: [
+          {
+            bio: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            category: {
+              name: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+        ],
+      });
+    } else {
+      andConsditions.push({
+        OR: [
+          {
+            hourlyRate: {
+              gte: numberSearch,
+            },
+          },
+          {
+            totalRating: {
+              gte: numberSearch,
+            },
+          },
+        ],
+      });
+    }
+  }
+
   const result = await prisma.tutorProfiles.findMany({
+    skip: skip as number,
+    take: limit as number,
+    where: {
+      AND: [...andConsditions],
+      user: {
+        status: "ACTIVE",
+      },
+    },
+    orderBy: {
+      [sortBy as string]: sortOrder,
+    },
     include: {
       user: true,
       category: true,
+      bookings: {
+        where: { status: BookingStatus.COMPLETED },
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+              comment: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  return result;
+  const totalData = await prisma.tutorProfiles.count({
+    where: {
+      AND: [...andConsditions],
+      user: {
+        status: "ACTIVE",
+      },
+    },
+  });
+
+  const totalPages = Math.ceil(totalData / (limit as number));
+
+  return { data: result, pagination: { totalData, page, limit, totalPages } };
 };
 
 const getProfileById = async (id: string) => {

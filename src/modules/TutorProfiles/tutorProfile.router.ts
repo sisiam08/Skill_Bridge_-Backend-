@@ -13,11 +13,7 @@ router.post(
 
 router.get("/", TutorProfileControllers.getAllProfiles);
 
-router.get(
-  "/:id",
-  auth_middleware([UserRole.ADMIN, UserRole.STUDENT]),
-  TutorProfileControllers.getProfileById,
-);
+router.get("/:id", TutorProfileControllers.getProfileById);
 
 router.patch(
   "/:id",

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "bunx tsx watch src/server.ts",
+    "seedAdmin": "bunx tsx src/script/seedAdmin.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

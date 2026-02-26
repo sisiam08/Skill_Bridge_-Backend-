@@ -5,10 +5,34 @@ const createReview = async (reviewData: {
   rating: number;
   comment: string;
 }) => {
-  const review = await prisma.reviews.create({
-    data: { ...reviewData },
+  await prisma.$transaction(async (tx) => {
+    const booking = await tx.bookings.findUnique({
+      where: { id: reviewData.bookingId },
+      select: { tutorId: true },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    await tx.tutorProfiles.update({
+      where: { id: booking.tutorId },
+      data: {
+        totalReviews: {
+          increment: 1,
+        },
+        totalRating: {
+          increment: reviewData.rating,
+        },
+      },
+    });
+
+    const review = await tx.reviews.create({
+      data: { ...reviewData },
+    });
+
+    return review;
   });
-  return review;
 };
 
 export const ReviewServices = {

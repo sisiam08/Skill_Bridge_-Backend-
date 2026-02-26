@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { TutorProfileServices } from "./tutorProfile.service";
-import { string } from "better-auth/*";
+import PaginationHelper from "../../helpers/Pagination";
+import { PaginationOptions, SortingOptions } from "../../types";
+import SortingHelper from "../../helpers/Sorting";
 
 const createProfile = async (req: Request, res: Response) => {
   try {
@@ -20,7 +22,22 @@ const createProfile = async (req: Request, res: Response) => {
 
 const getAllProfiles = async (req: Request, res: Response) => {
   try {
-    const data = await TutorProfileServices.getAllProfiles();
+    const search = req.query.search ? String(req.query.search) : undefined;
+
+    const { page, limit, skip }: PaginationOptions = PaginationHelper(
+      req.query,
+    );
+
+    const { sortBy, sortOrder }: SortingOptions = SortingHelper(req.query);
+
+    const data = await TutorProfileServices.getAllProfiles(
+      search,
+      page,
+      limit,
+      skip,
+      sortBy,
+      sortOrder,
+    );
 
     res.status(200).json({
       success: true,

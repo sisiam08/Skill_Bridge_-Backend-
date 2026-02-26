@@ -94,9 +94,10 @@ model TutorProfiles {
   categoriesId    String
   bio             String?    @db.VarChar(255)
   hourlyRate      Float      @default(0.00)
-  experienceYears Int
-  averagerating   Float      @default(0)
+  experienceYears Float
+  totalRating     Int        @default(0)
   totalReviews    Int        @default(0)
+  isFeatured      Boolean    @default(false)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   bookings        Bookings[]
@@ -168,7 +169,7 @@ model Reviews {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking Bookings      @relation(fields: [bookingId], references: [id])
+  booking Bookings @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId])
   @@map("reviews")

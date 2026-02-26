@@ -1,3 +1,4 @@
+import { BookingStatus } from "../../../generated/prisma/enums";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
   fitsInAvailabilitySlot,
@@ -67,7 +68,7 @@ const createBooking = async (
 
     const price = calculateTutionPrice(slotDuration, tutor.hourlyRate);
 
-    const booking = await tx.bookings.create({
+    return await tx.bookings.create({
       data: {
         studentId,
         tutorId,
@@ -78,16 +79,21 @@ const createBooking = async (
       },
     });
 
-    return booking;
   });
 };
 
-const getBookings = async (studentId: string) => {
+const getMyBookings = async (studentId: string) => {
   return await prisma.bookings.findMany({
     where: {
       studentId: studentId,
     },
     include: {
+      tutor: {
+        include: {
+          user: true,
+          category: true,
+        },
+      },
       reviews: true,
     },
   });
@@ -98,11 +104,32 @@ const getBookingDetails = async (bookingId: string) => {
     where: {
       id: bookingId,
     },
+    include: {
+      tutor: {
+        include: {
+          user: true,
+          category: true,
+        },
+      },
+      reviews: true,
+    },
   });
+};
+
+const updateBookingStatus = async (
+  bookingId: string,
+  status: BookingStatus,
+) => {
+  return await prisma.bookings.update({
+    where: { id: bookingId },
+    data: { status },
+  });
+
 };
 
 export const BookingServices = {
   createBooking,
-  getBookings,
+  getMyBookings,
   getBookingDetails,
+  updateBookingStatus,
 };

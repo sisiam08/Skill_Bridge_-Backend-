@@ -12,15 +12,21 @@ router.post(
 );
 
 router.get(
-  "/",
+  "/my-bookings",
   auth_middleware([UserRole.STUDENT]),
-  BookingControllers.getBookings,
+  BookingControllers.getMyBookings,
 );
 
 router.get(
   "/:id",
   auth_middleware([UserRole.STUDENT]),
   BookingControllers.getBookingDetails,
+);
+
+router.patch(
+  "/:id",
+  auth_middleware([UserRole.TUTOR, UserRole.STUDENT]),
+  BookingControllers.updateBookingStatus,
 );
 
 export const BookingRouters = router;
