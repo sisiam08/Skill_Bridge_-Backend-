@@ -2,7 +2,7 @@
 CREATE TYPE "UserRole" AS ENUM ('STUDENT', 'TUTOR', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE "UserStatus" AS ENUM ('BAN', 'UNBAN');
 
 -- CreateEnum
 CREATE TYPE "BookingStatus" AS ENUM ('CONFIRMED', 'COMPLETED', 'CANCELLED');
@@ -18,7 +18,7 @@ CREATE TABLE "user" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "role" "UserRole" NOT NULL,
     "phone" TEXT,
-    "status" "UserStatus" DEFAULT 'ACTIVE',
+    "status" "UserStatus" DEFAULT 'UNBAN',
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
@@ -75,9 +75,10 @@ CREATE TABLE "tutorProfiles" (
     "categoriesId" TEXT NOT NULL,
     "bio" VARCHAR(255),
     "hourlyRate" DOUBLE PRECISION NOT NULL DEFAULT 0.00,
-    "experienceYears" INTEGER NOT NULL,
-    "averagerating" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "experienceYears" DOUBLE PRECISION NOT NULL,
+    "totalRating" INTEGER NOT NULL DEFAULT 0,
     "totalReviews" INTEGER NOT NULL DEFAULT 0,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -109,10 +110,10 @@ CREATE TABLE "categories" (
 CREATE TABLE "bookings" (
     "id" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
-    "tutorid" TEXT NOT NULL,
+    "tutorId" TEXT NOT NULL,
     "sessionDate" TIMESTAMP(3) NOT NULL,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
     "status" "BookingStatus" NOT NULL DEFAULT 'CONFIRMED',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -125,8 +126,6 @@ CREATE TABLE "bookings" (
 CREATE TABLE "reviews" (
     "id" TEXT NOT NULL,
     "bookingId" TEXT NOT NULL,
-    "studenId" TEXT NOT NULL,
-    "tutorId" TEXT NOT NULL,
     "rating" INTEGER NOT NULL,
     "comment" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -190,10 +189,7 @@ ALTER TABLE "tutorAvailability" ADD CONSTRAINT "tutorAvailability_tutorId_fkey" 
 ALTER TABLE "bookings" ADD CONSTRAINT "bookings_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_tutorid_fkey" FOREIGN KEY ("tutorid") REFERENCES "tutorProfiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_tutorId_fkey" FOREIGN KEY ("tutorId") REFERENCES "tutorProfiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "bookings"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_tutorId_fkey" FOREIGN KEY ("tutorId") REFERENCES "tutorProfiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
