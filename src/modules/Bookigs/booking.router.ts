@@ -12,6 +12,12 @@ router.post(
 );
 
 router.get(
+  "/",
+  auth_middleware([UserRole.ADMIN]),
+  BookingControllers.getAllBookings,
+);
+
+router.get(
   "/my-bookings",
   auth_middleware([UserRole.STUDENT]),
   BookingControllers.getMyBookings,
@@ -19,7 +25,7 @@ router.get(
 
 router.get(
   "/:id",
-  auth_middleware([UserRole.STUDENT]),
+  auth_middleware([UserRole.ADMIN, UserRole.STUDENT]),
   BookingControllers.getBookingDetails,
 );
 

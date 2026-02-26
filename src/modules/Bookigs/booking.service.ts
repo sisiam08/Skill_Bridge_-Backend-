@@ -78,7 +78,19 @@ const createBooking = async (
         price,
       },
     });
+  });
+};
 
+const getAllBookings = async () => {
+  return await prisma.bookings.findMany({
+    include: {
+      tutor: {
+        include: {
+          user: true,
+          category: true,
+        },
+      },
+    },
   });
 };
 
@@ -124,11 +136,11 @@ const updateBookingStatus = async (
     where: { id: bookingId },
     data: { status },
   });
-
 };
 
 export const BookingServices = {
   createBooking,
+  getAllBookings,
   getMyBookings,
   getBookingDetails,
   updateBookingStatus,

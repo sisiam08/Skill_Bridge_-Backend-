@@ -27,11 +27,9 @@ const createReview = async (reviewData: {
       },
     });
 
-    const review = await tx.reviews.create({
+    return await tx.reviews.create({
       data: { ...reviewData },
     });
-
-    return review;
   });
 };
 

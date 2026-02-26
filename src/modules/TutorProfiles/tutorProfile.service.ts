@@ -1,4 +1,3 @@
-import { number, string } from "better-auth/*";
 import { BookingStatus } from "../../../generated/prisma/enums";
 import {
   TutorAvailabilityUpdateInput,
@@ -16,11 +15,9 @@ import {
 import { prisma } from "../../lib/prisma";
 
 const createProfile = async (tutorData: TutorProfilesCreateInput) => {
-  const result = await prisma.tutorProfiles.create({
+  return await prisma.tutorProfiles.create({
     data: tutorData,
   });
-
-  return result;
 };
 
 const getAllProfiles = async (
@@ -119,22 +116,20 @@ const getAllProfiles = async (
 };
 
 const getProfileById = async (id: string) => {
-  const result = await prisma.tutorProfiles.findUnique({
+  return await prisma.tutorProfiles.findUnique({
     where: { id },
     include: {
       user: true,
       category: true,
     },
   });
-
-  return result;
 };
 
 const updateProfile = async (
   id: string,
   tutorData: TutorProfilesUpdateInput,
 ) => {
-  const result = await prisma.tutorProfiles.update({
+  return await prisma.tutorProfiles.update({
     where: { id },
     data: tutorData,
     include: {
@@ -142,16 +137,12 @@ const updateProfile = async (
       category: true,
     },
   });
-
-  return result;
 };
 
 const deleteProfile = async (id: string) => {
-  const result = await prisma.tutorProfiles.delete({
+  return await prisma.tutorProfiles.delete({
     where: { id },
   });
-
-  return result;
 };
 
 const setAvailability = async (
@@ -189,23 +180,19 @@ const setAvailability = async (
     throw new Error("Overlapping availability slots");
   }
 
-  const result = await prisma.tutorAvailability.create({
+  return await prisma.tutorAvailability.create({
     data: {
       tutorId,
       ...availability,
     },
   });
-
-  return result;
 };
 
 const getAvailability = async (tutorId: string) => {
-  const result = await prisma.tutorAvailability.findMany({
+  return await prisma.tutorAvailability.findMany({
     where: { tutorId },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "desc" }],
   });
-
-  return result;
 };
 
 const getAvailableSlots = async (
@@ -314,22 +301,19 @@ const updateAvailability = async (
   id: string,
   availability: TutorAvailabilityUpdateInput,
 ) => {
-  const result = await prisma.tutorAvailability.update({
+  return await prisma.tutorAvailability.update({
     where: { id },
     data: availability,
   });
-
-  return result;
 };
 
 const getMeetingHistory = async (tutorId: string) => {
-  const result = await prisma.bookings.findMany({
+  return await prisma.bookings.findMany({
     where: { tutorId },
     include: {
       student: true,
     },
   });
-  return result;
 };
 
 export const TutorProfileServices = {
