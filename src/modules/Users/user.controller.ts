@@ -60,8 +60,25 @@ const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const UserController = {
+const getStats = async (req: Request, res: Response) => {
+  try {
+    const data = await UserServices.getStats();
+
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get stats",
+    });
+  }
+};
+
+export const UserControllers = {
   getAllUsers,
   getUserById,
   updateUser,
+  getStats,
 };

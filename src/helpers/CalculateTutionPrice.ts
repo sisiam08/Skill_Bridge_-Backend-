@@ -1,4 +1,3 @@
-import { timeToMinutes } from "./TimeHelpers";
 
 export const calculateTutionPrice = (
   duration: number,

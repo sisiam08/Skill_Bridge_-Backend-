@@ -78,7 +78,7 @@ const getAllProfiles = async (
     where: {
       AND: [...andConsditions],
       user: {
-        status: "ACTIVE",
+        status: "UNBAN",
       },
     },
     orderBy: {
@@ -105,7 +105,7 @@ const getAllProfiles = async (
     where: {
       AND: [...andConsditions],
       user: {
-        status: "ACTIVE",
+        status: "UNBAN",
       },
     },
   });

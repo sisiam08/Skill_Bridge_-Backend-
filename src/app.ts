@@ -8,7 +8,6 @@ import { UserRouters } from "./modules/Users/user.router";
 import { BookingRouters } from "./modules/Bookigs/booking.router";
 import { ReviewRouters } from "./modules/Reviews/review.router";
 import { notFound } from "./middleware/notFound";
-import { error } from "node:console";
 import errorHandler from "./middleware/globalErrorHandler";
 
 const app: Application = express();

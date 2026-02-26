@@ -14,8 +14,8 @@ enum UserRole {
 }
 
 enum UserStatus {
-  ACTIVE
-  INACTIVE
+  BAN
+  UNBAN
 }
 
 model User {
@@ -31,7 +31,7 @@ model User {
 
   role   UserRole
   phone  String?
-  status UserStatus? @default(ACTIVE)
+  status UserStatus? @default(UNBAN)
 
   tutorProfile TutorProfiles?
   bookings     Bookings[]

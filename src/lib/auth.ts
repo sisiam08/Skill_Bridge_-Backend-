@@ -30,7 +30,7 @@ export const auth = betterAuth({
       },
       status: {
         type: "string",
-        defaultValue: "ACTIVE",
+        defaultValue: "UNBAN",
         required: false,
       },
     },
