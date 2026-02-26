@@ -52,6 +52,14 @@ const getAllProfiles = async (
               },
             },
           },
+          {
+            user: {
+              name: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
         ],
       });
     } else {

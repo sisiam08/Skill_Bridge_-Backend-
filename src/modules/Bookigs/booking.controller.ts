@@ -32,12 +32,12 @@ const createBooking = async (req: Request, res: Response) => {
 
 const getAllBookings = async (req: Request, res: Response) => {
   try {
-    const bookings = await BookingServices.getAllBookings();
-    
+    const data = await BookingServices.getAllBookings();
+
     return res.status(200).json({
       success: true,
       message: "Bookings retrieved successfully",
-      data: bookings,
+      data,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -57,12 +57,12 @@ const getMyBookings = async (req: Request, res: Response) => {
     }
 
     const studentId = req.user.id;
-    const bookings = await BookingServices.getMyBookings(studentId);
+    const data = await BookingServices.getMyBookings(studentId);
 
     return res.status(200).json({
       success: true,
       message: "Bookings retrieved successfully",
-      data: bookings,
+      data,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -75,11 +75,9 @@ const getMyBookings = async (req: Request, res: Response) => {
 const getBookingDetails = async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
-    const bookingDetails = await BookingServices.getBookingDetails(
-      bookingId as string,
-    );
+    const data = await BookingServices.getBookingDetails(bookingId as string);
 
-    if (!bookingDetails) {
+    if (!data) {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
@@ -89,7 +87,7 @@ const getBookingDetails = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Booking details retrieved successfully",
-      data: bookingDetails,
+      data,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -103,11 +101,11 @@ const updateBookingStatus = async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
     const { status } = req.body;
-    const updatedBooking = await BookingServices.updateBookingStatus(
+    const data = await BookingServices.updateBookingStatus(
       bookingId as string,
       status,
     );
-    if (!updatedBooking) {
+    if (!data) {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
@@ -116,7 +114,7 @@ const updateBookingStatus = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Booking status updated successfully",
-      data: updatedBooking,
+      data,
     });
   } catch (error: any) {
     return res.status(500).json({

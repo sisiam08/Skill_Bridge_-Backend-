@@ -7,7 +7,8 @@ const getAllUsers = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Users retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -24,7 +25,8 @@ const getUserById = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "User details retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -50,7 +52,8 @@ const updateUser = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "User updated successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -66,7 +69,8 @@ const getStats = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Stats retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({

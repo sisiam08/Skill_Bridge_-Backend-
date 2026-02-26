@@ -10,7 +10,8 @@ const createProfile = async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
-      message: data,
+      message: "Profile created successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -41,7 +42,8 @@ const getAllProfiles = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Profiles retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -57,7 +59,8 @@ const getProfileById = async (req: Request, res: Response) => {
     const data = await TutorProfileServices.getProfileById(id);
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Profile details retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -73,7 +76,8 @@ const updateProfile = async (req: Request, res: Response) => {
     const data = await TutorProfileServices.updateProfile(id, req.body);
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Profile updated successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -89,7 +93,8 @@ const deleteProfile = async (req: Request, res: Response) => {
     const data = await TutorProfileServices.deleteProfile(id);
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Profile deleted successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -111,7 +116,8 @@ const setAvailability = async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
-      data: data,
+      message: "Availability set successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -138,7 +144,8 @@ const getAvailability = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Availability retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -161,7 +168,8 @@ const getAvailableSlots = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Available slots retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -183,7 +191,8 @@ const updateAvailability = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Availability updated successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -210,7 +219,8 @@ const getMeetingHistory = async (req: Request, res: Response) => {
     const data = await TutorProfileServices.getMeetingHistory(tutorId);
     res.status(200).json({
       success: true,
-      data: data,
+      message: "Meeting history retrieved successfully",
+      data,
     });
   } catch (error: any) {
     res.status(500).json({
