@@ -25,6 +25,9 @@ const getAllProfiles = async (req: Request, res: Response) => {
   try {
     const search = req.query.search ? String(req.query.search) : undefined;
 
+    const maxPrice = Number.parseFloat(req.query.maxPrice as string);
+    const minPrice = Number.parseFloat(req.query.minPrice as string);
+
     const { page, limit, skip }: PaginationOptions = PaginationHelper(
       req.query,
     );
@@ -33,6 +36,8 @@ const getAllProfiles = async (req: Request, res: Response) => {
 
     const data = await TutorProfileServices.getAllProfiles(
       search,
+      maxPrice,
+      minPrice,
       page,
       limit,
       skip,

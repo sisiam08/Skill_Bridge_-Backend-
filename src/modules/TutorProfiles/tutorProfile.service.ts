@@ -22,6 +22,8 @@ const createProfile = async (tutorData: TutorProfilesCreateInput) => {
 
 const getAllProfiles = async (
   search?: string | undefined,
+  maxPrice?: number,
+  minPrice?: number,
   page?: number,
   limit?: number,
   skip?: number,
@@ -78,6 +80,15 @@ const getAllProfiles = async (
         ],
       });
     }
+  }
+
+  if (minPrice || maxPrice) {
+    andConsditions.push({
+      hourlyRate: {
+        ...(minPrice && { gte: Number(minPrice) }),
+        ...(maxPrice && { lte: Number(maxPrice) }),
+      },
+    });
   }
 
   const result = await prisma.tutorProfiles.findMany({
