@@ -25,8 +25,16 @@ const getAllProfiles = async (req: Request, res: Response) => {
   try {
     const search = req.query.search ? String(req.query.search) : undefined;
 
-    const maxPrice = Number.parseFloat(req.query.maxPrice as string);
-    const minPrice = Number.parseFloat(req.query.minPrice as string);
+    const maxPrice = req.query.maxPrice
+      ? Number.parseFloat(req.query.maxPrice as string)
+      : undefined;
+    const minPrice = req.query.minPrice
+      ? Number.parseFloat(req.query.minPrice as string)
+      : undefined;
+
+    const availability = req.query.availability
+      ? Number.parseFloat(req.query.availability as string)
+      : undefined;
 
     const { page, limit, skip }: PaginationOptions = PaginationHelper(
       req.query,
@@ -43,6 +51,7 @@ const getAllProfiles = async (req: Request, res: Response) => {
       skip,
       sortBy,
       sortOrder,
+      availability
     );
 
     res.status(200).json({

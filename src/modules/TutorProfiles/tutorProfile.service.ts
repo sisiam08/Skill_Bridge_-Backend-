@@ -1,3 +1,4 @@
+import { includes } from "better-auth/*";
 import { BookingStatus } from "../../../generated/prisma/enums";
 import {
   TutorAvailabilityUpdateInput,
@@ -22,13 +23,14 @@ const createProfile = async (tutorData: TutorProfilesCreateInput) => {
 
 const getAllProfiles = async (
   search?: string | undefined,
-  maxPrice?: number,
-  minPrice?: number,
+  maxPrice?: number | undefined,
+  minPrice?: number | undefined,
   page?: number,
   limit?: number,
   skip?: number,
   sortBy?: string,
   sortOrder?: string,
+  availability?: number | undefined,
 ) => {
   const andConsditions: any[] = [];
 
@@ -91,6 +93,16 @@ const getAllProfiles = async (
     });
   }
 
+  if (availability) {
+    andConsditions.push({
+      availability: {
+        some: {
+          dayOfWeek: availability,
+        },
+      },
+    });
+  }
+
   const result = await prisma.tutorProfiles.findMany({
     skip: skip as number,
     take: limit as number,
@@ -106,6 +118,7 @@ const getAllProfiles = async (
     include: {
       user: true,
       category: true,
+      availability: true,
       bookings: {
         where: { status: BookingStatus.COMPLETED },
         include: {
