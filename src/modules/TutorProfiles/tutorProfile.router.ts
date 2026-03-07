@@ -13,10 +13,16 @@ router.post(
 
 router.get("/", TutorProfileControllers.getAllProfiles);
 
+router.get(
+  "/profile",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getMyProfile,
+);
+
 router.get("/:id", TutorProfileControllers.getProfileById);
 
 router.patch(
-  "/:id",
+  "/",
   auth_middleware([UserRole.TUTOR]),
   TutorProfileControllers.updateProfile,
 );

@@ -45,7 +45,7 @@ async function seedAdmin() {
     }
 
     console.log("Admin seeding successfull!");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error seeding admin: ", error);
   }
 }

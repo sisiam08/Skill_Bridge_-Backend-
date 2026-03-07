@@ -23,6 +23,7 @@ const createProfile = async (tutorData: TutorProfilesCreateInput) => {
 
 const getAllProfiles = async (
   search?: string | undefined,
+  category?: string | undefined,
   maxPrice?: number | undefined,
   minPrice?: number | undefined,
   page?: number,
@@ -82,6 +83,19 @@ const getAllProfiles = async (
         ],
       });
     }
+  }
+
+  if (category) {
+    const categoryName = category.trim();
+
+    andConsditions.push({
+      category: {
+        name: {
+          contains: categoryName,
+          mode: "insensitive",
+        },
+      },
+    });
   }
 
   if (minPrice || maxPrice) {
@@ -153,20 +167,66 @@ const getProfileById = async (id: string) => {
     include: {
       user: true,
       category: true,
+      availability: true,
+      bookings: {
+        where: { status: BookingStatus.COMPLETED },
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+              comment: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+const getMyProfile = async (userId: string) => {
+  return await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    include: {
+      user: true,
+      category: true,
+      availability: true,
+      bookings: {
+        where: { status: BookingStatus.COMPLETED },
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+              comment: true,
+            },
+          },
+        },
+      },
     },
   });
 };
 
 const updateProfile = async (
-  id: string,
+  userId: string,
   tutorData: TutorProfilesUpdateInput,
 ) => {
   return await prisma.tutorProfiles.update({
-    where: { id },
+    where: { userId },
     data: tutorData,
     include: {
       user: true,
       category: true,
+      availability: true,
+      bookings: {
+        where: { status: BookingStatus.COMPLETED },
+        include: {
+          reviews: {
+            select: {
+              rating: true,
+              comment: true,
+            },
+          },
+        },
+      },
     },
   });
 };
@@ -352,6 +412,7 @@ export const TutorProfileServices = {
   createProfile,
   getAllProfiles,
   getProfileById,
+  getMyProfile,
   updateProfile,
   deleteProfile,
   setAvailability,

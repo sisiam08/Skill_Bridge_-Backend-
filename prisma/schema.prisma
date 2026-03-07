@@ -89,18 +89,18 @@ model Verification {
 }
 
 model TutorProfiles {
-  id              String     @id @default(uuid())
-  userId          String     @unique
-  categoriesId    String
-  bio             String?    @db.VarChar(255)
-  hourlyRate      Float      @default(0.00)
-  experienceYears Float
-  totalRating     Int        @default(0)
-  totalReviews    Int        @default(0)
-  isFeatured      Boolean    @default(false)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  bookings        Bookings[]
+  id                     String     @id @default(uuid())
+  userId                 String     @unique
+  categoriesId           String
+  bio                    String?    @db.VarChar(255)
+  hourlyRate             Float      @default(0.00)
+  experienceYears        Float
+  totalRating            Int        @default(0)
+  totalReviews           Int        @default(0)
+  totalCompletedBookings Int        @default(0)
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+  bookings               Bookings[]
 
   user         User                @relation(fields: [userId], references: [id])
   category     Categories          @relation(fields: [categoriesId], references: [id])

@@ -25,6 +25,10 @@ const getAllProfiles = async (req: Request, res: Response) => {
   try {
     const search = req.query.search ? String(req.query.search) : undefined;
 
+    const category = req.query.category
+      ? String(req.query.category)
+      : undefined;
+
     const maxPrice = req.query.maxPrice
       ? Number.parseFloat(req.query.maxPrice as string)
       : undefined;
@@ -44,6 +48,7 @@ const getAllProfiles = async (req: Request, res: Response) => {
 
     const data = await TutorProfileServices.getAllProfiles(
       search,
+      category,
       maxPrice,
       minPrice,
       page,
@@ -51,7 +56,7 @@ const getAllProfiles = async (req: Request, res: Response) => {
       skip,
       sortBy,
       sortOrder,
-      availability
+      availability,
     );
 
     res.status(200).json({
@@ -84,10 +89,27 @@ const getProfileById = async (req: Request, res: Response) => {
   }
 };
 
+const getMyProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id as string;
+    const data = await TutorProfileServices.getMyProfile(userId);
+    res.status(200).json({
+      success: true,
+      message: "Profile details retrieved successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get profile",
+    });
+  }
+};
+
 const updateProfile = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id as string;
-    const data = await TutorProfileServices.updateProfile(id, req.body);
+    const userId = req.user?.id as string;
+    const data = await TutorProfileServices.updateProfile(userId, req.body);
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
@@ -248,6 +270,7 @@ export const TutorProfileControllers = {
   createProfile,
   getAllProfiles,
   getProfileById,
+  getMyProfile,
   updateProfile,
   deleteProfile,
   setAvailability,

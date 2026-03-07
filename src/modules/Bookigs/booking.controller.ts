@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { BookingServices } from "./booking.service";
+import { string } from "better-auth/*";
+import { UserRole } from "../../../generated/prisma/enums";
 
 const createBooking = async (req: Request, res: Response) => {
   try {
@@ -99,9 +101,13 @@ const getBookingDetails = async (req: Request, res: Response) => {
 
 const updateBookingStatus = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?.id as string;
+    const userRole = req.user?.role as UserRole;
     const bookingId = req.params.id;
     const { status } = req.body;
     const data = await BookingServices.updateBookingStatus(
+      userId,
+      userRole,
       bookingId as string,
       status,
     );

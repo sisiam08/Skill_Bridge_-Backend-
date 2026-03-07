@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import nodemailer from "nodemailer";
+import { User } from "../../generated/prisma/client";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -14,6 +15,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const auth = betterAuth({
+  // baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -34,6 +36,10 @@ export const auth = betterAuth({
         required: false,
       },
     },
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: true,
+    },
   },
   emailAndPassword: {
     enabled: true,
@@ -43,7 +49,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    redirectTo: "/dashboard",
+    redirectTo: "/",
     sendVerificationEmail: async ({ user, url }) => {
       try {
         const verificationURL = url;
@@ -107,7 +113,7 @@ export const auth = betterAuth({
                             </div>
                     
                             <p style="font-size:14px; color:#666666; line-height:1.6;">
-                              If the button doesn’t work, copy and paste this link into your browser:
+                              If the button doesn't work, copy and paste this link into your browser:
                             </p>
                     
                             <p style="font-size:14px; word-break:break-all;">

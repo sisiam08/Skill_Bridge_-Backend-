@@ -78,6 +78,7 @@ CREATE TABLE "tutorProfiles" (
     "experienceYears" DOUBLE PRECISION NOT NULL,
     "totalRating" INTEGER NOT NULL DEFAULT 0,
     "totalReviews" INTEGER NOT NULL DEFAULT 0,
+    "totalCompletedBookings" INTEGER NOT NULL DEFAULT 0,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

@@ -1,4 +1,4 @@
-import { BookingStatus } from "../../../generated/prisma/enums";
+import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
   fitsInAvailabilitySlot,
@@ -129,12 +129,29 @@ const getBookingDetails = async (bookingId: string) => {
 };
 
 const updateBookingStatus = async (
+  userId: string,
+  userRole: UserRole,
   bookingId: string,
   status: BookingStatus,
 ) => {
-  return await prisma.bookings.update({
-    where: { id: bookingId },
-    data: { status },
+  return await prisma.$transaction(async (tx) => {
+    if (userRole === UserRole.TUTOR) {
+      tx.tutorProfiles.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          totalCompletedBookings: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
+    return tx.bookings.update({
+      where: { id: bookingId },
+      data: { status },
+    });
   });
 };
 

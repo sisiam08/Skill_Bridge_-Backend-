@@ -1,22 +1,6 @@
 import { Request, Response } from "express";
 import { UserServices } from "./user.service";
-
-const getAllUsers = async (req: Request, res: Response) => {
-  try {
-    const data = await UserServices.getAllUsers();
-
-    res.status(200).json({
-      success: true,
-      message: "Users retrieved successfully",
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to get users",
-    });
-  }
-};
+import { auth } from "../../lib/auth";
 
 const getUserById = async (req: Request, res: Response) => {
   try {
@@ -36,53 +20,57 @@ const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-const updateUser = async (req: Request, res: Response) => {
+const updateMe = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id as string;
-    const { status } = req.body;
+    const userId = req.user?.id as string;
+    const { name, phone, image } = req.body;
 
-    if (!status) {
-      return res.status(400).json({
-        success: false,
-        message: "You can update only the status field",
-      });
-    }
-
-    const data = await UserServices.updateUser(id, status);
+    const data = await UserServices.updateMe(userId, { name, phone, image });
 
     res.status(200).json({
       success: true,
-      message: "User updated successfully",
+      message: "Profile updated successfully",
       data,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to update user",
+      message: error.message || "Failed to update profile",
     });
   }
 };
 
-const getStats = async (req: Request, res: Response) => {
+const updatePassword = async (req: Request, res: Response) => {
   try {
-    const data = await UserServices.getStats();
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "currentPassword and newPassword are required",
+      });
+    }
+
+    await auth.api.changePassword({
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+      headers: req.headers as Record<string, string>,
+    });
 
     res.status(200).json({
       success: true,
-      message: "Stats retrieved successfully",
-      data,
+      message:
+        "Password updated successfully. Other sessions have been revoked.",
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
-      message: error.message || "Failed to get stats",
+      message: error.message || "Failed to update password",
     });
   }
 };
 
 export const UserControllers = {
-  getAllUsers,
   getUserById,
-  updateUser,
-  getStats,
+  updateMe,
+  updatePassword,
 };

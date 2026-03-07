@@ -5,7 +5,7 @@ const createReview = async (reviewData: {
   rating: number;
   comment: string;
 }) => {
-  await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx) => {
     const booking = await tx.bookings.findUnique({
       where: { id: reviewData.bookingId },
       select: { tutorId: true },
