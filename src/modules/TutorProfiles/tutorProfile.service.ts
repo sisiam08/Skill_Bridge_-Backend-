@@ -1,4 +1,14 @@
-import { includes } from "better-auth/*";
+import {
+  addDays,
+  addHours,
+  format,
+  getHours,
+  getMinutes,
+  isSameDay,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 import { BookingStatus } from "../../../generated/prisma/enums";
 import {
   TutorAvailabilityUpdateInput,
@@ -333,9 +343,9 @@ const getAvailableSlots = async (
 
   const now = new Date();
 
-  const isToday = date.toDateString() === now.toDateString();
+  const isToday = isSameDay(date, now);
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = getHours(now) * 60 + getMinutes(now);
 
   tutorSlots.forEach((slot) => {
     const freeRanges = subtractBookedFromFreeSlots(
@@ -399,13 +409,300 @@ const updateAvailability = async (
   });
 };
 
-const getMeetingHistory = async (tutorId: string) => {
-  return await prisma.bookings.findMany({
-    where: { tutorId },
-    include: {
-      student: true,
-    },
+const deleteAvailability = async (id: string) => {
+  return await prisma.tutorAvailability.delete({
+    where: { id },
   });
+};
+
+const getBookingSessions = async (
+  userId: string,
+  status: BookingStatus | undefined,
+) => {
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!tutorProfile) {
+    throw new Error("Tutor profile not found");
+  }
+
+  const andConditions: any = { tutorId: tutorProfile.id };
+
+  if (status) {
+    andConditions.status = status;
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const today = addHours(startOfDay(new Date()), 6);
+    const currentTime = format(new Date(), "HH:mm");
+
+    await tx.bookings.updateMany({
+      where: {
+        OR: [
+          {
+            sessionDate: {
+              lt: today,
+            },
+          },
+          {
+            sessionDate: {
+              equals: today,
+            },
+            endTime: {
+              lt: currentTime,
+            },
+          },
+        ],
+        status: BookingStatus.CONFIRMED,
+      },
+      data: {
+        status: BookingStatus.CANCELLED,
+      },
+    });
+
+    return await prisma.bookings.findMany({
+      where: andConditions,
+      orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
+      include: {
+        student: true,
+      },
+    });
+  });
+};
+
+const setDefaultClassLink = async (
+  userId: string,
+  defaultClassLink: string,
+) => {
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!tutorProfile) {
+    throw new Error("Tutor profile not found");
+  }
+  return await prisma.tutorProfiles.update({
+    where: { id: tutorProfile.id },
+    data: { defaultClassLink: defaultClassLink },
+  });
+};
+
+const getDefaultClassLink = async (userId: string) => {
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    select: { defaultClassLink: true },
+  });
+  if (!tutorProfile) {
+    throw new Error("Tutor profile not found");
+  }
+  return { defaultClassLink: tutorProfile.defaultClassLink };
+};
+
+const getTutorStats = async (userId: string) => {
+  const today = addHours(startOfDay(new Date()), 6);
+  const currentMonthStart = addHours(startOfMonth(new Date()), 6);
+  const currentWeekStart = addHours(startOfWeek(new Date()), 6);
+
+  return await prisma.$transaction(async (tx) => {
+    const tutorProfile = await tx.tutorProfiles.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        totalRating: true,
+        totalReviews: true,
+        hourlyRate: true,
+        experienceYears: true,
+      },
+    });
+
+    if (!tutorProfile) {
+      throw new Error("Tutor profile not found");
+    }
+
+    const tutorId = tutorProfile.id as string;
+    const [
+      totalEarnings,
+      monthlyEarnings,
+      todayEarnings,
+      totalUniqueStudents,
+      activeAvailableDays,
+      totalRatings,
+      averageRating,
+      totalReviews,
+      completedSessions,
+      todayCompletedSessions,
+      weeklyCompletedSessions,
+      canceledSessions,
+      monthlyCanceledSessions,
+      confirmedSessions,
+    ] = await Promise.all([
+      // Total Earnings
+      tx.bookings.aggregate({
+        where: { tutorId, status: BookingStatus.COMPLETED },
+        _sum: { price: true },
+      }),
+
+      // Monthly Earnings
+      tx.bookings.aggregate({
+        where: {
+          tutorId,
+          status: BookingStatus.COMPLETED,
+          sessionDate: { gte: currentMonthStart },
+        },
+        _sum: { price: true },
+      }),
+
+      // Today's Earnings
+      tx.bookings.aggregate({
+        where: {
+          tutorId,
+          status: BookingStatus.COMPLETED,
+          sessionDate: {
+            equals: today,
+          },
+        },
+        _sum: { price: true },
+      }),
+
+      // Total Unique Students
+      tx.bookings.findMany({
+        where: {
+          tutorId,
+          status: BookingStatus.COMPLETED,
+        },
+        distinct: ["studentId"],
+        select: { studentId: true },
+      }),
+
+      // Active Available Days
+      tx.tutorAvailability.findMany({
+        where: { tutorId, isActive: true },
+        distinct: ["dayOfWeek"],
+        select: { dayOfWeek: true },
+      }),
+
+      // Total Ratings
+      tutorProfile.totalRating,
+
+      // Average Rating
+      tutorProfile.totalRating /
+        (tutorProfile.totalReviews ? tutorProfile.totalReviews : 1),
+
+      // Total Reviews
+      tutorProfile.totalReviews,
+
+      // Total Completed Sessions
+      tx.bookings.count({
+        where: { tutorId, status: BookingStatus.COMPLETED },
+      }),
+
+      // Today's Completed Sessions
+      tx.bookings.count({
+        where: {
+          tutorId,
+          status: BookingStatus.COMPLETED,
+          sessionDate: {
+            equals: today,
+          },
+        },
+      }),
+
+      // Weekly Completed Sessions
+      tx.bookings.count({
+        where: {
+          tutorId,
+          status: BookingStatus.COMPLETED,
+          sessionDate: { gte: currentWeekStart },
+        },
+      }),
+
+      // Canceled Sessions
+      tx.bookings.count({
+        where: { tutorId, status: BookingStatus.CANCELLED },
+      }),
+
+      // Monthly Canceled Sessions
+      tx.bookings.count({
+        where: {
+          tutorId,
+          status: BookingStatus.CANCELLED,
+          sessionDate: { gte: currentMonthStart },
+        },
+      }),
+
+      // Confirmed Sessions
+      tx.bookings.count({
+        where: { tutorId, status: BookingStatus.CONFIRMED },
+      }),
+    ]);
+
+    return {
+      earnings: {
+        totalEarnings: totalEarnings._sum.price ?? 0,
+        earningsThisMonth: monthlyEarnings._sum.price ?? 0,
+        earningsToday: todayEarnings._sum.price ?? 0,
+        hourlyRate: tutorProfile.hourlyRate,
+      },
+      profile: {
+        uniqueStudents: totalUniqueStudents.length,
+        experienceYears: tutorProfile.experienceYears,
+        activeDays: activeAvailableDays.length,
+        averageRating,
+        totalRatings,
+        reviewCount: totalReviews,
+      },
+      sessions: {
+        completed: completedSessions,
+        completedToday: todayCompletedSessions,
+        completedThisWeek: weeklyCompletedSessions,
+        cancelled: canceledSessions,
+        cancelledThisMonth: monthlyCanceledSessions,
+        upcoming: confirmedSessions,
+      },
+    };
+  });
+};
+
+const getWeeklyEarnings = async (userId: string) => {
+  const tutorProfile = await prisma.tutorProfiles.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!tutorProfile) {
+    throw new Error("Tutor profile not found");
+  }
+
+  const currentWeekStart = addHours(startOfWeek(new Date()), 6);
+
+  const data = Array.from({ length: 7 }, async (_, i) => {
+    const dayStart = addDays(currentWeekStart, i);
+    const dayEnd = addDays(dayStart, 1);
+    const dayName = format(dayStart, "EEE");
+
+    const result = await prisma.bookings.aggregate({
+      where: {
+        tutorId: tutorProfile.id,
+        status: BookingStatus.COMPLETED,
+        sessionDate: {
+          gte: dayStart,
+          lt: dayEnd,
+        },
+      },
+      _sum: { price: true },
+    });
+
+    return {
+      weekDay: dayName,
+      earnings: result._sum.price ?? 0,
+    };
+  });
+
+  const weeklyEarnings = await Promise.all(data);
+
+  return weeklyEarnings;
 };
 
 export const TutorProfileServices = {
@@ -419,5 +716,10 @@ export const TutorProfileServices = {
   getAvailability,
   getAvailableSlots,
   updateAvailability,
-  getMeetingHistory,
+  deleteAvailability,
+  getBookingSessions,
+  setDefaultClassLink,
+  getDefaultClassLink,
+  getTutorStats,
+  getWeeklyEarnings,
 };

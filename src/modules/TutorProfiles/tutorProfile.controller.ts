@@ -3,6 +3,7 @@ import { TutorProfileServices } from "./tutorProfile.service";
 import PaginationHelper from "../../helpers/Pagination";
 import { PaginationOptions, SortingOptions } from "../../types";
 import SortingHelper from "../../helpers/Sorting";
+import { BookingStatus } from "../../../generated/prisma/enums";
 
 const createProfile = async (req: Request, res: Response) => {
   try {
@@ -238,33 +239,121 @@ const updateAvailability = async (req: Request, res: Response) => {
   }
 };
 
-const getMeetingHistory = async (req: Request, res: Response) => {
+const deleteAvailability = async (req: Request, res: Response) => {
   try {
-    const tutorId = req.params.id as string;
+    const id = req.params.id as string;
 
-    const tutorProfile = await TutorProfileServices.getProfileById(tutorId);
+    const data = await TutorProfileServices.deleteAvailability(id);
 
-    if (req.user?.role === "TUTOR" && req.user?.id !== tutorProfile?.user.id) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "You dont have permission to view other tutor's meeting history",
-      });
-    }
-
-    const data = await TutorProfileServices.getMeetingHistory(tutorId);
     res.status(200).json({
       success: true,
-      message: "Meeting history retrieved successfully",
+      message: "Availability deleted successfully",
       data,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to get bookings for tutor",
+      message: error.message || "Failed to delete availability",
     });
   }
 };
+
+const getBookingSessions = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const status = req.query.status
+      ? (req.query.status as BookingStatus)
+      : undefined;
+
+    const data = await TutorProfileServices.getBookingSessions(userId!, status);
+    res.status(200).json({
+      success: true,
+      message: "Sessions retrieved successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get sessions",
+    });
+  }
+};
+
+const setDefaultClassLink = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id as string;
+    const { defaultClassLink } = req.body;
+    const data = await TutorProfileServices.setDefaultClassLink(
+      userId,
+      defaultClassLink,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Default class link set successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to set default class link",
+    });
+  }
+};
+
+const getDefaultClassLink = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id as string;
+    const data = await TutorProfileServices.getDefaultClassLink(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Default class link retrieved successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get default class link",
+    });
+  }
+};
+
+const getTutorStats = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id as string;
+    const data = await TutorProfileServices.getTutorStats(userId!);
+
+    res.status(200).json({
+      success: true,
+      message: "Tutor stats retrieved successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get tutor stats",
+    });
+  }
+};
+
+const getWeeklyEarnings = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id as string;
+    const data = await TutorProfileServices.getWeeklyEarnings(userId!);
+    res.status(200).json({
+      success: true,
+      message: "Weekly earnings retrieved successfully",
+      data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get weekly earnings",
+    });
+  }
+};
+
 
 export const TutorProfileControllers = {
   createProfile,
@@ -277,5 +366,10 @@ export const TutorProfileControllers = {
   getAvailability,
   getAvailableSlots,
   updateAvailability,
-  getMeetingHistory,
+  deleteAvailability,
+  getBookingSessions,
+  setDefaultClassLink,
+  getDefaultClassLink,
+  getTutorStats,
+  getWeeklyEarnings,
 };

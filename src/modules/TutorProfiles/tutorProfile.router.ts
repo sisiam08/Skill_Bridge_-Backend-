@@ -19,6 +19,30 @@ router.get(
   TutorProfileControllers.getMyProfile,
 );
 
+router.get(
+  "/bookings",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getBookingSessions,
+);
+
+router.get(
+  "/defaultClassLink",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getDefaultClassLink,
+);
+
+router.get(
+  "/stats",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getTutorStats,
+);
+
+router.get(
+  "/weeklyEarnings",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.getWeeklyEarnings,
+);
+
 router.get("/:id", TutorProfileControllers.getProfileById);
 
 router.patch(
@@ -57,10 +81,16 @@ router.patch(
   TutorProfileControllers.updateAvailability,
 );
 
-router.get(
-  "/:id/bookings",
+router.delete(
+  "/availability/:id",
   auth_middleware([UserRole.TUTOR]),
-  TutorProfileControllers.getMeetingHistory,
+  TutorProfileControllers.deleteAvailability,
+);
+
+router.patch(
+  "/defaultClassLink",
+  auth_middleware([UserRole.TUTOR]),
+  TutorProfileControllers.setDefaultClassLink,
 );
 
 export const TutorProfileRouters: Router = router;

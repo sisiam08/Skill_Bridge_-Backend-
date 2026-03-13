@@ -1,3 +1,5 @@
+import { _isoDate } from "better-auth/*";
+import { addHours, format, isEqual, startOfDay } from "date-fns";
 import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
@@ -82,32 +84,92 @@ const createBooking = async (
 };
 
 const getAllBookings = async () => {
-  return await prisma.bookings.findMany({
-    include: {
-      tutor: {
-        include: {
-          user: true,
-          category: true,
+  return await prisma.$transaction(async (tx) => {
+    const today = addHours(startOfDay(new Date()), 6);
+    const currentTime = format(new Date(), "HH:mm");
+
+    await tx.bookings.updateMany({
+      where: {
+        OR: [
+          {
+            sessionDate: {
+              lt: today,
+            },
+          },
+          {
+            sessionDate: {
+              equals: today,
+            },
+            endTime: {
+              lt: currentTime,
+            },
+          },
+        ],
+        status: BookingStatus.CONFIRMED,
+      },
+      data: {
+        status: BookingStatus.CANCELLED,
+      },
+    });
+
+    return await tx.bookings.findMany({
+      orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
+      include: {
+        tutor: {
+          include: {
+            user: true,
+            category: true,
+          },
         },
       },
-    },
+    });
   });
 };
 
 const getMyBookings = async (studentId: string) => {
-  return await prisma.bookings.findMany({
-    where: {
-      studentId: studentId,
-    },
-    include: {
-      tutor: {
-        include: {
-          user: true,
-          category: true,
-        },
+  return await prisma.$transaction(async (tx) => {
+    const today = addHours(startOfDay(new Date()), 6);
+    const currentTime = format(new Date(), "HH:mm");
+
+    await tx.bookings.updateMany({
+      where: {
+        OR: [
+          {
+            sessionDate: {
+              lt: today,
+            },
+          },
+          {
+            sessionDate: {
+              equals: today,
+            },
+            endTime: {
+              lt: currentTime,
+            },
+          },
+        ],
+        status: BookingStatus.CONFIRMED,
       },
-      reviews: true,
-    },
+      data: {
+        status: BookingStatus.CANCELLED,
+      },
+    });
+
+    return await tx.bookings.findMany({
+      where: {
+        studentId: studentId,
+      },
+      orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
+      include: {
+        tutor: {
+          include: {
+            user: true,
+            category: true,
+          },
+        },
+        reviews: true,
+      },
+    });
   });
 };
 
@@ -155,10 +217,46 @@ const updateBookingStatus = async (
   });
 };
 
+const sendClassLink = async (bookingId: string, classLink: string) => {
+  const today = addHours(startOfDay(new Date()), 6);
+  const currentTime = format(new Date(), "HH:mm");
+
+  const bookings = await prisma.bookings.findUnique({
+    where: { id: bookingId },
+    select: { sessionDate: true, startTime: true },
+  });
+
+  if (!bookings) {
+    throw new Error("Booking not found");
+  }
+
+  if (
+    bookings.sessionDate > today ||
+    (isEqual(bookings.sessionDate, today) && bookings.startTime > currentTime)
+  ) {
+    throw new Error("Cannot send class link before the session time starts.");
+  }
+
+  return await prisma.bookings.update({
+    where: { id: bookingId },
+    data: { status: BookingStatus.RUNNING, classLink },
+  });
+};
+
+const receiveClassLink = async (bookingId: string) => {
+  const booking = await prisma.bookings.findUnique({
+    where: { id: bookingId },
+    select: { classLink: true },
+  });
+  return booking?.classLink || null;
+};
+
 export const BookingServices = {
   createBooking,
   getAllBookings,
   getMyBookings,
   getBookingDetails,
   updateBookingStatus,
+  sendClassLink,
+  receiveClassLink,
 };

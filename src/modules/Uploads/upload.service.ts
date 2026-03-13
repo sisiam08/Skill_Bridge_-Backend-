@@ -5,16 +5,15 @@ const uploadImage = async (file: Express.Multer.File) => {
   const uploadDir = join(process.cwd(), "public", "uploads");
   await mkdir(uploadDir, { recursive: true });
 
-  const fileName = `image-${file.originalname}-${Date.now()}`;
-  
+  const fileName = `image-${Date.now()}-${file.originalname}`;
+
   const filePath = join(uploadDir, fileName);
 
   await writeFile(filePath, file.buffer);
 
-  const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:5000";
+  const baseUrl = process.env.BETTER_AUTH_URL;
   return `${baseUrl}/uploads/${fileName}`;
 };
-
 
 export const UploadServices = {
   uploadImage,

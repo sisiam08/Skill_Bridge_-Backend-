@@ -1,3 +1,10 @@
+import {
+  getHours,
+  getMinutes,
+  isBefore,
+  isSameDay,
+  startOfDay,
+} from "date-fns";
 
 export const timeToMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
@@ -96,30 +103,18 @@ export const validateBookingDateTime = (
   sessionDate?: Date,
   startTime?: string,
 ) => {
-  const now = new Date();
-
   if (sessionDate) {
-    const bookingDate = sessionDate;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const bookingDay = new Date(bookingDate);
-    bookingDay.setHours(0, 0, 0, 0);
-
-    if (bookingDay < today) {
+    if (isBefore(startOfDay(sessionDate), startOfDay(new Date()))) {
       throw new Error("Cannot see/book previous date slot!");
     }
 
-    if (startTime) {
-      if (bookingDay.getTime() === today.getTime()) {
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (startTime && isSameDay(sessionDate, new Date())) {
+      const now = new Date();
+      const currentMinutes = getHours(now) * 60 + getMinutes(now);
+      const bookingStartMinutes = timeToMinutes(startTime);
 
-        const bookingStartMinutes = timeToMinutes(startTime);
-
-        if (bookingStartMinutes < currentMinutes) {
-          throw new Error("Cannot see/book previous slot!");
-        }
+      if (bookingStartMinutes < currentMinutes) {
+        throw new Error("Cannot see/book previous slot!");
       }
     }
   }

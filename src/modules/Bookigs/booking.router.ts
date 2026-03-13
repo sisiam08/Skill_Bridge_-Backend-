@@ -24,9 +24,21 @@ router.get(
 );
 
 router.get(
+  "/:id/classLink",
+  auth_middleware([UserRole.STUDENT]),
+  BookingControllers.receiveClassLink,
+);
+
+router.get(
   "/:id",
   auth_middleware([UserRole.ADMIN, UserRole.STUDENT]),
   BookingControllers.getBookingDetails,
+);
+
+router.patch(
+  "/:id/classLink",
+  auth_middleware([UserRole.TUTOR]),
+  BookingControllers.sendClassLink,
 );
 
 router.patch(

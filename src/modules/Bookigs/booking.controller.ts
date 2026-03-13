@@ -130,10 +130,65 @@ const updateBookingStatus = async (req: Request, res: Response) => {
   }
 };
 
+const sendClassLink = async (req: Request, res: Response) => {
+  try {
+    const bookingId = req.params.id;
+    const { classLink } = req.body;
+    const data = await BookingServices.sendClassLink(
+      bookingId as string,
+      classLink as string,
+    );
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Class link sent successfully",
+      data,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send class link",
+    });
+  }
+};
+
+const receiveClassLink = async (req: Request, res: Response) => {
+  try {
+    const bookingId = req.params.id;
+    const classLink = await BookingServices.receiveClassLink(
+      bookingId as string,
+    );
+
+    if (!classLink) {
+      return res.status(404).json({
+        success: false,
+        message: "Class link not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Class link receive successfully",
+      data: { classLink },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to receive class link",
+    });
+  }
+};
+
 export const BookingControllers = {
   createBooking,
   getAllBookings,
   getMyBookings,
   getBookingDetails,
   updateBookingStatus,
+  sendClassLink,
+  receiveClassLink,
 };

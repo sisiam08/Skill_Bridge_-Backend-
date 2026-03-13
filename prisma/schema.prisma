@@ -98,6 +98,7 @@ model TutorProfiles {
   totalRating            Int        @default(0)
   totalReviews           Int        @default(0)
   totalCompletedBookings Int        @default(0)
+  defaultClassLink       String?    @db.Text
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
   bookings               Bookings[]
@@ -136,6 +137,7 @@ model Categories {
 
 enum BookingStatus {
   CONFIRMED
+  RUNNING
   COMPLETED
   CANCELLED
 }
@@ -149,6 +151,7 @@ model Bookings {
   endTime     String
   price       Float
   status      BookingStatus @default(CONFIRMED)
+  classLink   String?       @db.Text
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
