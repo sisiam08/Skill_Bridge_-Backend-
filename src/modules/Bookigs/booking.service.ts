@@ -44,7 +44,7 @@ const createBooking = async (
       throw new Error("Selected time outside of tutor availability");
     }
 
-    const existingBookings = await tx.bookings.findMany({
+    const existingTutorBookings = await tx.bookings.findMany({
       where: {
         tutorId,
         sessionDate: date,
@@ -55,8 +55,23 @@ const createBooking = async (
       },
     });
 
-    if (isOverlapping({ startTime, endTime }, existingBookings)) {
+    if (isOverlapping({ startTime, endTime }, existingTutorBookings)) {
       throw new Error("Slot already booked");
+    }
+
+    const existingMyBookings = await tx.bookings.findMany({
+      where: {
+        studentId,
+        sessionDate: date,
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+      },
+    });
+
+    if (isOverlapping({ startTime, endTime }, existingMyBookings)) {
+      throw new Error("Already you book this slot with another tutor.");
     }
 
     const tutor = await tx.tutorProfiles.findUnique({
@@ -159,7 +174,7 @@ const getMyBookings = async (studentId: string) => {
       where: {
         studentId: studentId,
       },
-      orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
+      orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
       include: {
         tutor: {
           include: {

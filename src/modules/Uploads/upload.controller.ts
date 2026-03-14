@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { UploadServices } from "./upload.service";
-import { Multer } from "multer";
 
 const uploadImage = async (req: Request, res: Response) => {
   try {
