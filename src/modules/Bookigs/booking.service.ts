@@ -232,39 +232,8 @@ const updateBookingStatus = async (
   });
 };
 
-const sendClassLink = async (bookingId: string, classLink: string) => {
-  const today = addHours(startOfDay(new Date()), 6);
-  const currentTime = format(new Date(), "HH:mm");
 
-  const bookings = await prisma.bookings.findUnique({
-    where: { id: bookingId },
-    select: { sessionDate: true, startTime: true },
-  });
 
-  if (!bookings) {
-    throw new Error("Booking not found");
-  }
-
-  if (
-    bookings.sessionDate > today ||
-    (isEqual(bookings.sessionDate, today) && bookings.startTime > currentTime)
-  ) {
-    throw new Error("Cannot send class link before the session time starts.");
-  }
-
-  return await prisma.bookings.update({
-    where: { id: bookingId },
-    data: { status: BookingStatus.RUNNING, classLink },
-  });
-};
-
-const receiveClassLink = async (bookingId: string) => {
-  const booking = await prisma.bookings.findUnique({
-    where: { id: bookingId },
-    select: { classLink: true },
-  });
-  return booking?.classLink || null;
-};
 
 export const BookingServices = {
   createBooking,
@@ -272,6 +241,4 @@ export const BookingServices = {
   getMyBookings,
   getBookingDetails,
   updateBookingStatus,
-  sendClassLink,
-  receiveClassLink,
 };

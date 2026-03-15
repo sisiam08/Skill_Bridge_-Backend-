@@ -12,6 +12,7 @@ import errorHandler from "./middleware/globalErrorHandler";
 import { UserRouters } from "./modules/Users/user.router";
 import { UploadRouters } from "./modules/Uploads/upload.router";
 import { join } from "path";
+import { StudentRouter } from "./modules/student/student.router";
 
 const app: Application = express();
 
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use("/api/admin", AdminRouters);
 app.use("/api/users", UserRouters);
 app.use("/api/tutors", TutorProfileRouters);
+app.use("/api/students", StudentRouter);
 app.use("/api/categories", CategoryRouters);
 app.use("/api/bookings", BookingRouters);
 app.use("/api/reviews", ReviewRouters);

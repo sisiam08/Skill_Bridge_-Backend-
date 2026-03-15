@@ -1,4 +1,6 @@
+import { date } from "better-auth/*";
 import {
+  formatDistanceToNow,
   getHours,
   getMinutes,
   isBefore,
@@ -120,4 +122,10 @@ export const validateBookingDateTime = (
   }
 
   return true;
+};
+
+export const timeAgo = (date: Date ): string | undefined => {
+  // console.log(date);
+  if (!date) return undefined;
+  return formatDistanceToNow(new Date(date), { addSuffix: true });
 };

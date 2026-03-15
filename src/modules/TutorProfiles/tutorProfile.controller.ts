@@ -354,6 +354,34 @@ const getWeeklyEarnings = async (req: Request, res: Response) => {
   }
 };
 
+const sendClassLink = async (req: Request, res: Response) => {
+  try {
+    const bookingId = req.params.id;
+    const { classLink } = req.body;
+    const data = await TutorProfileServices.sendClassLink(
+      bookingId as string,
+      classLink as string,
+    );
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Class link sent successfully",
+      data,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send class link",
+    });
+  }
+};
+
+
 
 export const TutorProfileControllers = {
   createProfile,
@@ -372,4 +400,5 @@ export const TutorProfileControllers = {
   getDefaultClassLink,
   getTutorStats,
   getWeeklyEarnings,
+  sendClassLink,
 };

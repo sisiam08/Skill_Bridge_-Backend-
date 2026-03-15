@@ -5,8 +5,6 @@ const getAllUsers = async () => {
   return await prisma.user.findMany();
 };
 
-
-
 const updateUser = async (userId: string, userStatus: UserStatus) => {
   return await prisma.user.update({
     where: { id: userId },

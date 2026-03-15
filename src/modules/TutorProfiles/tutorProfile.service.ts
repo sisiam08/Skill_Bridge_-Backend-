@@ -4,6 +4,7 @@ import {
   format,
   getHours,
   getMinutes,
+  isEqual,
   isSameDay,
   startOfDay,
   startOfMonth,
@@ -705,6 +706,32 @@ const getWeeklyEarnings = async (userId: string) => {
   return weeklyEarnings;
 };
 
+const sendClassLink = async (bookingId: string, classLink: string) => {
+  const today = addHours(startOfDay(new Date()), 6);
+  const currentTime = format(new Date(), "HH:mm");
+
+  const bookings = await prisma.bookings.findUnique({
+    where: { id: bookingId },
+    select: { sessionDate: true, startTime: true },
+  });
+
+  if (!bookings) {
+    throw new Error("Booking not found");
+  }
+
+  if (
+    bookings.sessionDate > today ||
+    (isEqual(bookings.sessionDate, today) && bookings.startTime > currentTime)
+  ) {
+    throw new Error("Cannot send class link before the session time starts.");
+  }
+
+  return await prisma.bookings.update({
+    where: { id: bookingId },
+    data: { status: BookingStatus.RUNNING, classLink },
+  });
+};
+
 export const TutorProfileServices = {
   createProfile,
   getAllProfiles,
@@ -722,4 +749,5 @@ export const TutorProfileServices = {
   getDefaultClassLink,
   getTutorStats,
   getWeeklyEarnings,
+  sendClassLink,
 };
