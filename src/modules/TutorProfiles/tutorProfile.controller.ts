@@ -218,10 +218,12 @@ const getAvailableSlots = async (req: Request, res: Response) => {
 
 const updateAvailability = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?.id as string;
     const id = req.params.id as string;
     const availability = req.body;
 
     const data = await TutorProfileServices.updateAvailability(
+      userId,
       id,
       availability,
     );
@@ -234,7 +236,7 @@ const updateAvailability = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to update availability",
+      message: error.message ,
     });
   }
 };

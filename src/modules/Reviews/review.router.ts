@@ -5,6 +5,18 @@ import { UserRole } from "../../../generated/prisma/client";
 
 const router = express.Router();
 
-router.post("/", auth_middleware([UserRole.STUDENT]), ReviewControllers.createReview);
+router.post(
+  "/",
+  auth_middleware([UserRole.STUDENT]),
+  ReviewControllers.createReview,
+);
+
+router.get("/", auth_middleware([UserRole.ADMIN]), ReviewControllers.getAllReviews);
+
+router.get(
+  "/tutor/:id",
+  auth_middleware([UserRole.STUDENT, UserRole.TUTOR]),
+  ReviewControllers.getAllReviewsForTutor,
+);
 
 export const ReviewRouters = router;

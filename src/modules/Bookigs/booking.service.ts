@@ -213,9 +213,9 @@ const updateBookingStatus = async (
 ) => {
   return await prisma.$transaction(async (tx) => {
     if (userRole === UserRole.TUTOR) {
-      tx.tutorProfiles.update({
+      await tx.tutorProfiles.update({
         where: {
-          id: userId,
+          userId,
         },
         data: {
           totalCompletedBookings: {
@@ -225,15 +225,12 @@ const updateBookingStatus = async (
       });
     }
 
-    return tx.bookings.update({
+    return await tx.bookings.update({
       where: { id: bookingId },
       data: { status },
     });
   });
 };
-
-
-
 
 export const BookingServices = {
   createBooking,

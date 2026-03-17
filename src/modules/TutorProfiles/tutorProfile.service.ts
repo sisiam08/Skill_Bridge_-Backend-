@@ -293,7 +293,7 @@ const setAvailability = async (
 
 const getAvailability = async (tutorId: string) => {
   return await prisma.tutorAvailability.findMany({
-    where: { tutorId },
+    where: { tutorId, isActive: true },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "desc" }],
   });
 };
@@ -347,6 +347,7 @@ const getAvailableSlots = async (
   const isToday = isSameDay(date, now);
 
   const currentMinutes = getHours(now) * 60 + getMinutes(now);
+  const currentSlotMinutes = Math.ceil(currentMinutes / 30) * 30;
 
   tutorSlots.forEach((slot) => {
     const freeRanges = subtractBookedFromFreeSlots(
@@ -358,10 +359,10 @@ const getAvailableSlots = async (
       let freeEndMin = timeToMinutes(freeSlot.endTime);
 
       if (isToday) {
-        if (freeEndMin <= currentMinutes) {
+        if (freeEndMin <= currentSlotMinutes) {
           return;
-        } else if (freeStartMin < currentMinutes) {
-          freeStartMin = currentMinutes;
+        } else if (freeStartMin < currentSlotMinutes) {
+          freeStartMin = currentSlotMinutes;
         }
       }
 
@@ -375,7 +376,7 @@ const getAvailableSlots = async (
           endTime: minutesToTime(endMin),
         });
 
-        currentStart = currentStart + 60;
+        currentStart = currentStart + 30;
       }
     });
   });
@@ -401,9 +402,48 @@ const getAvailableSlots = async (
 };
 
 const updateAvailability = async (
+  userId: string,
   id: string,
-  availability: TutorAvailabilityUpdateInput,
+  availability: {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isActive: boolean;
+  },
 ) => {
+  const { dayOfWeek, startTime, endTime, isActive } = availability;
+
+  if (!isActive) {
+    const StartMin = timeToMinutes(startTime);
+    const EndMin = timeToMinutes(endTime);
+
+    if (EndMin <= StartMin) {
+      throw new Error("Invalid time range");
+    }
+
+    const tutorProfile = await prisma.tutorProfiles.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!tutorProfile) {
+      throw new Error("Tutor profile not found");
+    }
+
+    const tutorId = tutorProfile.id;
+
+    const exixtingSlots = await prisma.tutorAvailability.findMany({
+      where: {
+        tutorId,
+        dayOfWeek,
+      },
+    });
+
+    if (isOverlapping({ startTime, endTime }, exixtingSlots)) {
+      throw new Error("Overlapping availability slots");
+    }
+  }
+
   return await prisma.tutorAvailability.update({
     where: { id },
     data: availability,

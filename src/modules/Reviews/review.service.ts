@@ -33,6 +33,19 @@ const createReview = async (reviewData: {
   });
 };
 
+const getAllReviews = async () => {
+  return await prisma.reviews.findMany();
+};
+
+
+const getAllReviewsForTutor = async (tutorId: string) => {
+  return await prisma.reviews.findMany({
+    where: { booking: { tutorId } },
+  });
+};
+
 export const ReviewServices = {
   createReview,
+  getAllReviews,
+  getAllReviewsForTutor,
 };
