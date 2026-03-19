@@ -65,13 +65,11 @@ router.post(
 
 router.get(
   "/:id/availability",
-  auth_middleware([UserRole.ADMIN, UserRole.STUDENT, UserRole.TUTOR]),
   TutorProfileControllers.getAvailability,
 );
 
 router.get(
   "/:id/availableSlots",
-  auth_middleware([UserRole.STUDENT]),
   TutorProfileControllers.getAvailableSlots,
 );
 

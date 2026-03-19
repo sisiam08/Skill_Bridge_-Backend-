@@ -91,7 +91,7 @@ model Verification {
 model TutorProfiles {
   id                     String     @id @default(uuid())
   userId                 String     @unique
-  categoriesId           String
+  categoriesId           String?
   bio                    String?    @db.VarChar(255)
   hourlyRate             Float      @default(0.00)
   experienceYears        Float
@@ -104,7 +104,7 @@ model TutorProfiles {
   bookings               Bookings[]
 
   user         User                @relation(fields: [userId], references: [id])
-  category     Categories          @relation(fields: [categoriesId], references: [id])
+  category     Categories?         @relation(fields: [categoriesId], references: [id], onDelete: SetNull)
   availability TutorAvailability[]
 
   @@index([userId])

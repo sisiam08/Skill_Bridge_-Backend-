@@ -11,12 +11,8 @@ router.post(
   ReviewControllers.createReview,
 );
 
-router.get("/", auth_middleware([UserRole.ADMIN]), ReviewControllers.getAllReviews);
+router.get("/", ReviewControllers.getAllReviews);
 
-router.get(
-  "/tutor/:id",
-  auth_middleware([UserRole.STUDENT, UserRole.TUTOR]),
-  ReviewControllers.getAllReviewsForTutor,
-);
+router.get("/tutor/:id", ReviewControllers.getAllReviewsForTutor);
 
 export const ReviewRouters = router;

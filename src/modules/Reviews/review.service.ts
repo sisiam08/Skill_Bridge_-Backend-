@@ -34,14 +34,97 @@ const createReview = async (reviewData: {
 };
 
 const getAllReviews = async () => {
-  return await prisma.reviews.findMany();
+  const data = await prisma.reviews.findMany({
+    orderBy: {
+      rating: "desc",
+    },
+    include: {
+      booking: {
+        select: {
+          tutor: {
+            select: {
+              user: {
+                select: {
+                  name: true,
+                  image: true,
+                },
+              },
+              category: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          student: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return data.map((review: any) => ({
+    id: review.id,
+    bookingId: review.bookingId,
+    rating: review.rating,
+    comment: review.comment,
+    tutorName: review.booking?.tutor?.user?.name,
+    tutorImage: review.booking?.tutor?.user?.image,
+    tutorCategory: review.booking?.tutor?.category?.name,
+    studentName: review.booking?.student?.name,
+    studentImage: review.booking?.student?.image,
+  }));
 };
 
-
 const getAllReviewsForTutor = async (tutorId: string) => {
-  return await prisma.reviews.findMany({
+  const data = await prisma.reviews.findMany({
     where: { booking: { tutorId } },
+    orderBy: {
+      rating: "desc",
+    },
+    include: {
+      booking: {
+        select: {
+          tutor: {
+            select: {
+              user: {
+                select: {
+                  name: true,
+                  image: true,
+                },
+              },
+              category: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          student: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
+    },
   });
+
+  return data.map((review: any) => ({
+    id: review.id,
+    bookingId: review.bookingId,
+    rating: review.rating,
+    comment: review.comment,
+    tutorName: review.booking?.tutor?.user?.name,
+    tutorImage: review.booking?.tutor?.user?.image,
+    tutorCategory: review.booking?.tutor?.category?.name,
+    studentName: review.booking?.student?.name,
+    studentImage: review.booking?.student?.image,
+  }));
 };
 
 export const ReviewServices = {

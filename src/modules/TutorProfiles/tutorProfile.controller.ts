@@ -37,6 +37,10 @@ const getAllProfiles = async (req: Request, res: Response) => {
       ? Number.parseFloat(req.query.minPrice as string)
       : undefined;
 
+    const rating = req.query.rating
+      ? Number.parseFloat(req.query.rating as string)
+      : undefined;
+
     const availability = req.query.availability
       ? Number.parseFloat(req.query.availability as string)
       : undefined;
@@ -57,6 +61,7 @@ const getAllProfiles = async (req: Request, res: Response) => {
       skip,
       sortBy,
       sortOrder,
+      rating,
       availability,
     );
 
@@ -236,7 +241,7 @@ const updateAvailability = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message ,
+      message: error.message,
     });
   }
 };
@@ -382,8 +387,6 @@ const sendClassLink = async (req: Request, res: Response) => {
     });
   }
 };
-
-
 
 export const TutorProfileControllers = {
   createProfile,

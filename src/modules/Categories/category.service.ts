@@ -25,9 +25,8 @@ const updateCategory = async (
 };
 
 const deleteCategory = async (id: string) => {
-  return await prisma.categories.update({
+  return await prisma.categories.delete({
     where: { id },
-    data: { isActive: false },
   });
 };
 

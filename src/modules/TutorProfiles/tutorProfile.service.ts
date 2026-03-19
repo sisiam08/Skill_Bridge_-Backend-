@@ -42,6 +42,7 @@ const getAllProfiles = async (
   skip?: number,
   sortBy?: string,
   sortOrder?: string,
+  rating?: number | undefined,
   availability?: number | undefined,
 ) => {
   const andConsditions: any[] = [];
@@ -158,7 +159,16 @@ const getAllProfiles = async (
     },
   });
 
-  const totalData = await prisma.tutorProfiles.count({
+  let filteredResult = result;
+  if (rating) {
+    filteredResult = result.filter((tutor) => {
+      if (tutor.totalReviews === 0) return false;
+      const averageRating = tutor.totalRating / tutor.totalReviews;
+      return averageRating >= rating;
+    });
+  }
+
+  let totalData = await prisma.tutorProfiles.count({
     where: {
       AND: [...andConsditions],
       user: {
@@ -167,9 +177,14 @@ const getAllProfiles = async (
     },
   });
 
+  totalData = rating ? filteredResult.length : totalData;
+
   const totalPages = Math.ceil(totalData / (limit as number));
 
-  return { data: result, pagination: { totalData, page, limit, totalPages } };
+  return {
+    data: filteredResult,
+    pagination: { totalData, page, limit, totalPages },
+  };
 };
 
 const getProfileById = async (id: string) => {
@@ -292,9 +307,20 @@ const setAvailability = async (
 };
 
 const getAvailability = async (tutorId: string) => {
-  return await prisma.tutorAvailability.findMany({
+  const availabilities = await prisma.tutorAvailability.findMany({
     where: { tutorId, isActive: true },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "desc" }],
+  });
+
+  // Filter out any records with null/undefined time values
+  return availabilities.filter((av) => {
+    if (!av.startTime || !av.endTime) {
+      console.error(
+        `Warning: Availability record ${av.id} has invalid time values (startTime: ${av.startTime}, endTime: ${av.endTime})`,
+      );
+      return false;
+    }
+    return true;
   });
 };
 
@@ -413,7 +439,7 @@ const updateAvailability = async (
 ) => {
   const { dayOfWeek, startTime, endTime, isActive } = availability;
 
-  if (!isActive) {
+  if (isActive === null) {
     const StartMin = timeToMinutes(startTime);
     const EndMin = timeToMinutes(endTime);
 
@@ -444,10 +470,12 @@ const updateAvailability = async (
     }
   }
 
-  return await prisma.tutorAvailability.update({
+  const data = await prisma.tutorAvailability.update({
     where: { id },
     data: availability,
   });
+
+  return data;
 };
 
 const deleteAvailability = async (id: string) => {
@@ -563,6 +591,23 @@ const getTutorStats = async (userId: string) => {
     }
 
     const tutorId = tutorProfile.id as string;
+
+    const bookingsPrice = await tx.bookings.findMany({
+      where: {
+        tutorId,
+        status: "COMPLETED",
+      },
+      select: {
+        price: true,
+        sessionDate: true,
+      },
+    });
+
+    const earningsPerBooking = bookingsPrice.map((booking) => ({
+      earnings: booking.price * 0.9,
+      sessionDate: booking.sessionDate,
+    }));
+
     const [
       totalEarnings,
       monthlyEarnings,
@@ -580,32 +625,28 @@ const getTutorStats = async (userId: string) => {
       confirmedSessions,
     ] = await Promise.all([
       // Total Earnings
-      tx.bookings.aggregate({
-        where: { tutorId, status: BookingStatus.COMPLETED },
-        _sum: { price: true },
-      }),
+      earningsPerBooking.reduce(
+        (accumulator, currentbooking) => accumulator + currentbooking.earnings,
+        0,
+      ),
 
       // Monthly Earnings
-      tx.bookings.aggregate({
-        where: {
-          tutorId,
-          status: BookingStatus.COMPLETED,
-          sessionDate: { gte: currentMonthStart },
-        },
-        _sum: { price: true },
-      }),
+      earningsPerBooking
+        .filter((booking) => booking.sessionDate > currentMonthStart)
+        .reduce(
+          (accumulator, currentbooking) =>
+            accumulator + currentbooking.earnings,
+          0,
+        ),
 
       // Today's Earnings
-      tx.bookings.aggregate({
-        where: {
-          tutorId,
-          status: BookingStatus.COMPLETED,
-          sessionDate: {
-            equals: today,
-          },
-        },
-        _sum: { price: true },
-      }),
+      earningsPerBooking
+        .filter((booking) => booking.sessionDate == today)
+        .reduce(
+          (accumulator, currentbooking) =>
+            accumulator + currentbooking.earnings,
+          0,
+        ),
 
       // Total Unique Students
       tx.bookings.findMany({
@@ -681,9 +722,9 @@ const getTutorStats = async (userId: string) => {
 
     return {
       earnings: {
-        totalEarnings: totalEarnings._sum.price ?? 0,
-        earningsThisMonth: monthlyEarnings._sum.price ?? 0,
-        earningsToday: todayEarnings._sum.price ?? 0,
+        totalEarnings: totalEarnings ?? 0,
+        earningsThisMonth: monthlyEarnings ?? 0,
+        earningsToday: todayEarnings ?? 0,
         hourlyRate: tutorProfile.hourlyRate,
       },
       profile: {
