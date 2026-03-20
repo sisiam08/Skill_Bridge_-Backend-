@@ -159,7 +159,7 @@ const getRecentActivity = async (userId: string) => {
     return {
       recentSession: {
         tutorName: recentSession?.tutor.user.name,
-        categoryName: recentSession?.tutor.category.name,
+        categoryName: recentSession?.tutor?.category?.name,
         timeAgo: timeAgo(recentSession?.updatedAt as Date),
       },
       recentReview: {
@@ -169,12 +169,11 @@ const getRecentActivity = async (userId: string) => {
       },
       recentBooking: {
         sessionDate: recentBooking?.sessionDate,
-        categoryName: recentBooking?.tutor.category.name,
+        categoryName: recentBooking?.tutor?.category?.name,
         timeAgo: timeAgo(recentBooking?.createdAt as Date),
       },
     };
   });
-
 };
 
 export const StudentServices = {

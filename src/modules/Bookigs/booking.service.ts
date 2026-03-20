@@ -98,7 +98,7 @@ const createBooking = async (
   });
 };
 
-const getAllBookings = async () => {
+const getAllBookings = async (status?: BookingStatus) => {
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
     const currentTime = format(new Date(), "HH:mm");
@@ -128,23 +128,63 @@ const getAllBookings = async () => {
     });
 
     return await tx.bookings.findMany({
+      where: status ? { status } : {},
       orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
       include: {
         tutor: {
-          include: {
-            user: true,
-            category: true,
+          select: {
+            id: true,
+            bio: true,
+            hourlyRate: true,
+            experienceYears: true,
+            totalRating: true,
+            totalReviews: true,
+            totalCompletedBookings: true,
+            defaultClassLink: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                image: true,
+              },
+            },
+            category: {
+              select: { id: true, name: true },
+            },
           },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            image: true,
+          },
+        },
+        reviews: {
+          select: { id: true, rating: true, comment: true },
         },
       },
     });
   });
 };
 
-const getMyBookings = async (studentId: string) => {
+const getMyBookings = async (
+  studentId: string,
+  status?: BookingStatus | undefined,
+) => {
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
     const currentTime = format(new Date(), "HH:mm");
+
+    const andConditions: any = { studentId };
+
+    if (status) {
+      andConditions.status = status;
+    }
 
     await tx.bookings.updateMany({
       where: {
@@ -171,9 +211,7 @@ const getMyBookings = async (studentId: string) => {
     });
 
     return await tx.bookings.findMany({
-      where: {
-        studentId: studentId,
-      },
+      where: andConditions,
       orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
       include: {
         tutor: {

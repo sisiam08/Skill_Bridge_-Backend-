@@ -535,7 +535,29 @@ const getBookingSessions = async (
       where: andConditions,
       orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
       include: {
-        student: true,
+        tutor: {
+          select: {
+            category: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        student: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+            image: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+            comment: true,
+          },
+        },
       },
     });
   });

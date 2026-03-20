@@ -1,10 +1,56 @@
-import { start } from "node:repl";
 import { UserRole, UserStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
-import { addHours, compareAsc, startOfDay, startOfMonth } from "date-fns";
+import { addHours, startOfMonth } from "date-fns";
 
-const getAllUsers = async () => {
-  return await prisma.user.findMany();
+const getAllUsers = async (
+  search?: string,
+  role?: UserRole,
+  status?: UserStatus,
+) => {
+
+  const andConditions: any[] = [];
+
+  if (search) {
+    andConditions.push({
+      OR: [
+        {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  if (role) {
+    andConditions.push({
+      role: {
+        equals: role,
+      },
+    });
+  }
+
+  if (status) {
+    andConditions.push({
+      status: {
+        equals: status,
+      },
+    });
+  }
+
+
+  return await prisma.user.findMany({
+    where: {
+      AND: andConditions,
+    },
+  });
 };
 
 const updateUser = async (userId: string, userStatus: UserStatus) => {
@@ -43,14 +89,16 @@ const getStats = async () => {
       totalStudents,
       totalBookings,
       totalBookingsCompleted,
-      totalBookingsCanceled,
+      totalBookingsCancelled,
       totalReviews,
       totalRevenue,
       monthlyRevenue,
     ] = await Promise.all([
       tx.user.count(),
-      tx.tutorProfiles.count(),
-      tx.tutorProfiles.count({ where: { user: { status: UserStatus.BAN } } }),
+      tx.user.count({ where: { role: UserRole.TUTOR } }),
+      tx.user.count({
+        where: { role: UserRole.TUTOR, status: UserStatus.BAN },
+      }),
       tx.user.count({ where: { role: UserRole.STUDENT } }),
       tx.bookings.count(),
       tx.bookings.count({ where: { status: "COMPLETED" } }),
@@ -62,7 +110,7 @@ const getStats = async () => {
         0,
       ),
       commissionsPerBooking
-        .filter((booking) => booking.sessionDate >  currentMonthStart)
+        .filter((booking) => booking.sessionDate > currentMonthStart)
         .reduce(
           (accumulator, currentbooking) =>
             accumulator + currentbooking.commission,
@@ -77,7 +125,7 @@ const getStats = async () => {
       totalStudents,
       totalBookings,
       totalBookingsCompleted,
-      totalBookingsCanceled,
+      totalBookingsCancelled,
       totalReviews,
       totalRevenue,
       monthlyRevenue,

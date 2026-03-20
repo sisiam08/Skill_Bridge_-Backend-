@@ -1,9 +1,20 @@
 import { Request, Response } from "express";
 import { AdminServices } from "./admin.service";
+import { UserRole, UserStatus } from "../../../generated/prisma/client";
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const data = await AdminServices.getAllUsers();
+    const search = req.query.search ? String(req.query.search) : undefined;
+
+    const role = req.query.role
+      ? (String(req.query.role) as UserRole)
+      : undefined;
+
+    const status = req.query.status
+      ? (String(req.query.status) as UserStatus)
+      : undefined;
+
+    const data = await AdminServices.getAllUsers(search, role, status);
 
     res.status(200).json({
       success: true,

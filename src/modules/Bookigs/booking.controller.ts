@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { BookingServices } from "./booking.service";
-import { UserRole } from "../../../generated/prisma/enums";
+import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
 
 const createBooking = async (req: Request, res: Response) => {
   try {
@@ -33,7 +33,11 @@ const createBooking = async (req: Request, res: Response) => {
 
 const getAllBookings = async (req: Request, res: Response) => {
   try {
-    const data = await BookingServices.getAllBookings();
+    const status = req.query.status
+      ? (req.query.status as BookingStatus)
+      : undefined;
+
+    const data = await BookingServices.getAllBookings(status);
 
     return res.status(200).json({
       success: true,
@@ -50,15 +54,12 @@ const getAllBookings = async (req: Request, res: Response) => {
 
 const getMyBookings = async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+    const studentId = req?.user?.id;
+    const status = req.query.status
+      ? (req.query.status as BookingStatus)
+      : undefined;
 
-    const studentId = req.user.id;
-    const data = await BookingServices.getMyBookings(studentId);
+    const data = await BookingServices.getMyBookings(studentId!, status);
 
     return res.status(200).json({
       success: true,
@@ -128,9 +129,6 @@ const updateBookingStatus = async (req: Request, res: Response) => {
     });
   }
 };
-
-
-
 
 export const BookingControllers = {
   createBooking,

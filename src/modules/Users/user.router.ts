@@ -17,10 +17,4 @@ router.patch(
   UserControllers.updateMe,
 );
 
-router.patch(
-  "/me/password",
-  auth_middleware([UserRole.ADMIN, UserRole.TUTOR, UserRole.STUDENT]),
-  UserControllers.updatePassword,
-);
-
 export const UserRouters = router;
