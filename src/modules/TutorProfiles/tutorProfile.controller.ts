@@ -272,7 +272,17 @@ const getBookingSessions = async (req: Request, res: Response) => {
       ? (req.query.status as BookingStatus)
       : undefined;
 
-    const data = await TutorProfileServices.getBookingSessions(userId!, status);
+    const { page, limit, skip }: PaginationOptions = PaginationHelper(
+      req.query,
+    );
+
+    const data = await TutorProfileServices.getBookingSessions(
+      userId!,
+      status,
+      page,
+      limit,
+      skip,
+    );
     res.status(200).json({
       success: true,
       message: "Sessions retrieved successfully",

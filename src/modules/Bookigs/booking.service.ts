@@ -98,7 +98,12 @@ const createBooking = async (
   });
 };
 
-const getAllBookings = async (status?: BookingStatus) => {
+const getAllBookings = async (
+  status?: BookingStatus,
+  page?: number,
+  limit?: number,
+  skip?: number,
+) => {
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
     const currentTime = format(new Date(), "HH:mm");
@@ -127,20 +132,14 @@ const getAllBookings = async (status?: BookingStatus) => {
       },
     });
 
-    return await tx.bookings.findMany({
+    const result = await tx.bookings.findMany({
+      skip: skip as number,
+      take: limit as number,
       where: status ? { status } : {},
       orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
       include: {
         tutor: {
-          select: {
-            id: true,
-            bio: true,
-            hourlyRate: true,
-            experienceYears: true,
-            totalRating: true,
-            totalReviews: true,
-            totalCompletedBookings: true,
-            defaultClassLink: true,
+          include: {
             user: {
               select: {
                 id: true,
@@ -169,12 +168,31 @@ const getAllBookings = async (status?: BookingStatus) => {
         },
       },
     });
+
+    const totalData = await prisma.bookings.count({
+      where: status ? { status } : {},
+    });
+
+    const totalPages = Math.ceil(totalData / (limit as number));
+
+    return {
+      data: result,
+      pagination: {
+        totalData,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   });
 };
 
 const getMyBookings = async (
   studentId: string,
   status?: BookingStatus | undefined,
+  page?: number,
+  limit?: number,
+  skip?: number,
 ) => {
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
@@ -210,7 +228,9 @@ const getMyBookings = async (
       },
     });
 
-    return await tx.bookings.findMany({
+    const result = await tx.bookings.findMany({
+      skip: skip as number,
+      take: limit as number,
       where: andConditions,
       orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
       include: {
@@ -223,6 +243,20 @@ const getMyBookings = async (
         reviews: true,
       },
     });
+
+    const totalData = await prisma.bookings.count({ where: andConditions });
+
+    const totalPages = Math.ceil(totalData / (limit as number));
+
+    return {
+      data: result,
+      pagination: {
+        totalData,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   });
 };
 

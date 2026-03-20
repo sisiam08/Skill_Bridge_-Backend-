@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { BookingServices } from "./booking.service";
 import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
+import { PaginationOptions } from "../../types";
+import PaginationHelper from "../../helpers/Pagination";
 
 const createBooking = async (req: Request, res: Response) => {
   try {
@@ -37,7 +39,16 @@ const getAllBookings = async (req: Request, res: Response) => {
       ? (req.query.status as BookingStatus)
       : undefined;
 
-    const data = await BookingServices.getAllBookings(status);
+    const { page, limit, skip }: PaginationOptions = PaginationHelper(
+      req.query,
+    );
+
+    const data = await BookingServices.getAllBookings(
+      status,
+      page,
+      limit,
+      skip,
+    );
 
     return res.status(200).json({
       success: true,
@@ -59,7 +70,11 @@ const getMyBookings = async (req: Request, res: Response) => {
       ? (req.query.status as BookingStatus)
       : undefined;
 
-    const data = await BookingServices.getMyBookings(studentId!, status);
+    const { page, limit, skip }: PaginationOptions = PaginationHelper(
+      req.query,
+    );
+
+    const data = await BookingServices.getMyBookings(studentId!, status, page, limit, skip);
 
     return res.status(200).json({
       success: true,

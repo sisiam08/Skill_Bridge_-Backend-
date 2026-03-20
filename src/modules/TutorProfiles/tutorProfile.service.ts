@@ -487,6 +487,9 @@ const deleteAvailability = async (id: string) => {
 const getBookingSessions = async (
   userId: string,
   status: BookingStatus | undefined,
+  page?: number,
+  limit?: number,
+  skip?: number,
 ) => {
   const tutorProfile = await prisma.tutorProfiles.findUnique({
     where: { userId },
@@ -531,7 +534,9 @@ const getBookingSessions = async (
       },
     });
 
-    return await prisma.bookings.findMany({
+    const result = await prisma.bookings.findMany({
+      skip: skip as number,
+      take: limit as number,
       where: andConditions,
       orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
       include: {
@@ -560,6 +565,20 @@ const getBookingSessions = async (
         },
       },
     });
+
+    const totalData = await prisma.bookings.count({ where: andConditions });
+
+    const totalPages = Math.ceil(totalData / (limit as number));
+
+    return {
+      data: result,
+      pagination: {
+        totalData,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   });
 };
 
