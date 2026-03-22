@@ -1,5 +1,5 @@
 export type PaginationOptions = {
-  page?: number;
-  limit?: number;
+  page?: number | undefined;
+  limit?: number | undefined;
   skip?: number;
 };

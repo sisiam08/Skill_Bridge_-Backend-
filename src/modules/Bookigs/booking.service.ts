@@ -131,10 +131,11 @@ const getAllBookings = async (
         status: BookingStatus.CANCELLED,
       },
     });
+    const isPaginated = limit !== undefined;
 
     const result = await tx.bookings.findMany({
-      skip: skip as number,
-      take: limit as number,
+      ...(isPaginated && { skip: skip as number, take: limit as number }),
+
       where: status ? { status } : {},
       orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
       include: {
@@ -194,6 +195,7 @@ const getMyBookings = async (
   limit?: number,
   skip?: number,
 ) => {
+  console.log("getMyBookings called with:", { status, page, limit, skip });
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
     const currentTime = format(new Date(), "HH:mm");
@@ -228,9 +230,10 @@ const getMyBookings = async (
       },
     });
 
+    const isPaginated = limit !== undefined;
+
     const result = await tx.bookings.findMany({
-      skip: skip as number,
-      take: limit as number,
+      ...(isPaginated && { skip: skip as number, take: limit as number }),
       where: andConditions,
       orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
       include: {

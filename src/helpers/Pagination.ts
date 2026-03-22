@@ -1,12 +1,17 @@
 import { PaginationOptions } from "../types";
 
 const PaginationHelper = (options: PaginationOptions) => {
-  const page: number = Number(options.page) || 1;
-  const limit: number = Number(options.limit) || 10;
+  if(options.limit){
 
-  const skip = (page - 1) * limit;
-
-  return { page, limit, skip };
+    const page: number = Number(options.page);
+    const limit: number = Number(options.limit);
+    
+    const skip = (page - 1) * limit;
+    
+    return { page, limit, skip };
+  }else{
+    return { page: options.page, limit: options.limit, skip: 0 };
+  }
 };
 
 export default PaginationHelper;

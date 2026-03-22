@@ -12,7 +12,6 @@ import {
 } from "date-fns";
 import { BookingStatus } from "../../../generated/prisma/enums";
 import {
-  TutorAvailabilityUpdateInput,
   TutorProfilesCreateInput,
   TutorProfilesUpdateInput,
 } from "../../../generated/prisma/models";
@@ -128,10 +127,11 @@ const getAllProfiles = async (
       },
     });
   }
+  const isPaginated = limit !== undefined;
 
   const result = await prisma.tutorProfiles.findMany({
-    skip: skip as number,
-    take: limit as number,
+    ...(isPaginated && { skip: skip as number, take: limit as number }),
+
     where: {
       AND: [...andConsditions],
       user: {
@@ -534,9 +534,11 @@ const getBookingSessions = async (
       },
     });
 
+    const isPaginated = limit !== undefined;
+
     const result = await prisma.bookings.findMany({
-      skip: skip as number,
-      take: limit as number,
+      ...(isPaginated && { skip: skip as number, take: limit as number }),
+
       where: andConditions,
       orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
       include: {
