@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "bunx tsx watch src/server.ts",
     "seedAdmin": "bunx tsx src/script/seedAdmin.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +23,7 @@
     "@types/nodemailer": "^7.0.10",
     "@types/pg": "^8.16.0",
     "prisma": "^7.4.1",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },

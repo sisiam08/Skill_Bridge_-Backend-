@@ -5,7 +5,7 @@ CREATE TYPE "UserRole" AS ENUM ('STUDENT', 'TUTOR', 'ADMIN');
 CREATE TYPE "UserStatus" AS ENUM ('BAN', 'UNBAN');
 
 -- CreateEnum
-CREATE TYPE "BookingStatus" AS ENUM ('CONFIRMED', 'COMPLETED', 'CANCELLED');
+CREATE TYPE "BookingStatus" AS ENUM ('CONFIRMED', 'RUNNING', 'COMPLETED', 'CANCELLED');
 
 -- CreateTable
 CREATE TABLE "user" (
@@ -72,14 +72,14 @@ CREATE TABLE "verification" (
 CREATE TABLE "tutorProfiles" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "categoriesId" TEXT NOT NULL,
+    "categoriesId" TEXT,
     "bio" VARCHAR(255),
     "hourlyRate" DOUBLE PRECISION NOT NULL DEFAULT 0.00,
     "experienceYears" DOUBLE PRECISION NOT NULL,
     "totalRating" INTEGER NOT NULL DEFAULT 0,
     "totalReviews" INTEGER NOT NULL DEFAULT 0,
     "totalCompletedBookings" INTEGER NOT NULL DEFAULT 0,
-    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "defaultClassLink" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -117,6 +117,7 @@ CREATE TABLE "bookings" (
     "endTime" TEXT NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
     "status" "BookingStatus" NOT NULL DEFAULT 'CONFIRMED',
+    "classLink" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -181,7 +182,7 @@ ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "tutorProfiles" ADD CONSTRAINT "tutorProfiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tutorProfiles" ADD CONSTRAINT "tutorProfiles_categoriesId_fkey" FOREIGN KEY ("categoriesId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tutorProfiles" ADD CONSTRAINT "tutorProfiles_categoriesId_fkey" FOREIGN KEY ("categoriesId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "tutorAvailability" ADD CONSTRAINT "tutorAvailability_tutorId_fkey" FOREIGN KEY ("tutorId") REFERENCES "tutorProfiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

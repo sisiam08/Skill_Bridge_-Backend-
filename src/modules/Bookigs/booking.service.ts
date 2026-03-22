@@ -195,7 +195,6 @@ const getMyBookings = async (
   limit?: number,
   skip?: number,
 ) => {
-  console.log("getMyBookings called with:", { status, page, limit, skip });
   return await prisma.$transaction(async (tx) => {
     const today = addHours(startOfDay(new Date()), 6);
     const currentTime = format(new Date(), "HH:mm");
