@@ -27,7 +27,7 @@ async function seedAdmin() {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: process.env.APP_URL || "http://localhost:3000",
+          origin: process.env.APP_URL!,
         },
         body: JSON.stringify(adminData),
       },
