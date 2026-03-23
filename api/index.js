@@ -157,8 +157,8 @@ import { fileURLToPath } from "url";
 import * as runtime from "@prisma/client/runtime/client";
 var config = {
   "previewFeatures": [],
-  "clientVersion": "7.4.2",
-  "engineVersion": "94a226be1cf2967af2541cca5529f0f7ba866919",
+  "clientVersion": "7.4.1",
+  "engineVersion": "55ae170b1ced7fc6ed07a15f110549408c501bb3",
   "activeProvider": "postgresql",
   "inlineSchema": 'generator client {\n  provider = "prisma-client"\n  output   = "../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nenum UserRole {\n  STUDENT\n  TUTOR\n  ADMIN\n}\n\nenum UserStatus {\n  BAN\n  UNBAN\n}\n\nmodel User {\n  id            String    @id\n  name          String\n  email         String\n  emailVerified Boolean   @default(false)\n  image         String?\n  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt\n  sessions      Session[]\n  accounts      Account[]\n\n  role   UserRole\n  phone  String?\n  status UserStatus? @default(UNBAN)\n\n  tutorProfile TutorProfiles?\n  bookings     Bookings[]\n\n  @@unique([email])\n  @@map("user")\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel TutorProfiles {\n  id                     String     @id @default(uuid())\n  userId                 String     @unique\n  categoriesId           String?\n  bio                    String?    @db.VarChar(255)\n  hourlyRate             Float      @default(0.00)\n  experienceYears        Float\n  totalRating            Int        @default(0)\n  totalReviews           Int        @default(0)\n  totalCompletedBookings Int        @default(0)\n  defaultClassLink       String?    @db.Text\n  createdAt              DateTime   @default(now())\n  updatedAt              DateTime   @updatedAt\n  bookings               Bookings[]\n\n  user         User                @relation(fields: [userId], references: [id])\n  category     Categories?         @relation(fields: [categoriesId], references: [id], onDelete: SetNull)\n  availability TutorAvailability[]\n\n  @@index([userId])\n  @@map("tutorProfiles")\n}\n\nmodel TutorAvailability {\n  id        String  @id @default(uuid())\n  tutorId   String\n  dayOfWeek Int\n  startTime String\n  endTime   String\n  isActive  Boolean @default(true)\n\n  tutor TutorProfiles @relation(fields: [tutorId], references: [id], onDelete: Cascade)\n\n  @@map("tutorAvailability")\n}\n\nmodel Categories {\n  id       String  @id @default(uuid())\n  name     String  @unique @db.VarChar(100)\n  isActive Boolean @default(true)\n\n  tutorProfiles TutorProfiles[]\n\n  @@index([name])\n  @@map("categories")\n}\n\nenum BookingStatus {\n  CONFIRMED\n  RUNNING\n  COMPLETED\n  CANCELLED\n}\n\nmodel Bookings {\n  id          String        @id @default(uuid())\n  studentId   String\n  tutorId     String\n  sessionDate DateTime\n  startTime   String\n  endTime     String\n  price       Float\n  status      BookingStatus @default(CONFIRMED)\n  classLink   String?       @db.Text\n  createdAt   DateTime      @default(now())\n  updatedAt   DateTime      @updatedAt\n\n  reviews Reviews?\n\n  student User          @relation(fields: [studentId], references: [id], onDelete: Cascade)\n  tutor   TutorProfiles @relation(fields: [tutorId], references: [id])\n\n  @@index([id])\n  @@map("bookings")\n}\n\nmodel Reviews {\n  id        String   @id @default(uuid())\n  bookingId String   @unique\n  rating    Int\n  comment   String   @db.Text\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  booking Bookings @relation(fields: [bookingId], references: [id])\n\n  @@index([bookingId])\n  @@map("reviews")\n}\n',
   "runtimeDataModel": {
@@ -243,8 +243,8 @@ var Sql2 = runtime2.Sql;
 var Decimal2 = runtime2.Decimal;
 var getExtensionContext = runtime2.Extensions.getExtensionContext;
 var prismaVersion = {
-  client: "7.4.2",
-  engine: "94a226be1cf2967af2541cca5529f0f7ba866919"
+  client: "7.4.1",
+  engine: "55ae170b1ced7fc6ed07a15f110549408c501bb3"
 };
 var NullTypes2 = {
   DbNull: runtime2.NullTypes.DbNull,
@@ -1474,7 +1474,16 @@ var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  trustedOrigins: [process.env.APP_URL],
+  baseURL: process.env.BETTER_AUTH_URL,
+  trustedOrigins: [process.env.APP_URL, process.env.BETTER_AUTH_URL],
+  advanced: {
+    defaultCookieAttributes: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+      partitioned: true
+    }
+  },
   user: {
     additionalFields: {
       role: {
@@ -1603,8 +1612,7 @@ var auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    redirectTo: "/",
+    autoSignInAfterVerification: false,
     sendVerificationEmail: async ({ user, url }) => {
       try {
         const verificationURL = url;
@@ -3159,7 +3167,9 @@ var app = express8();
 app.use(
   cors({
     origin: process.env.APP_URL,
-    credentials: true
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
   })
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));

@@ -18,7 +18,16 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  trustedOrigins: [process.env.APP_URL!],
+  baseURL: process.env.BETTER_AUTH_URL!,
+  trustedOrigins: [process.env.APP_URL!, process.env.BETTER_AUTH_URL!],
+  advanced: {
+    defaultCookieAttributes: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+      partitioned: true,
+    },
+  },
   user: {
     additionalFields: {
       role: {
@@ -147,8 +156,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    redirectTo: "/",
+    autoSignInAfterVerification: false,
     sendVerificationEmail: async ({ user, url }) => {
       try {
         const verificationURL = url;
@@ -253,7 +261,6 @@ export const auth = betterAuth({
       }
     },
   },
-
   socialProviders: {
     google: {
       prompt: "select_account consent",
