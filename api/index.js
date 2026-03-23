@@ -1474,7 +1474,7 @@ var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  trustedOrigins: [process.env.APP_URL || "http://localhost:3000"],
+  trustedOrigins: [process.env.APP_URL],
   user: {
     additionalFields: {
       role: {
@@ -3158,7 +3158,7 @@ var StudentRouter = router8;
 var app = express8();
 app.use(
   cors({
-    origin: [process.env.APP_URL || "http://localhost:3000"],
+    origin: process.env.APP_URL,
     credentials: true
   })
 );
