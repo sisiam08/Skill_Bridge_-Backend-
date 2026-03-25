@@ -312,7 +312,6 @@ const getAvailability = async (tutorId: string) => {
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "desc" }],
   });
 
-  // Filter out any records with null/undefined time values
   return availabilities.filter((av) => {
     if (!av.startTime || !av.endTime) {
       console.error(
@@ -334,31 +333,23 @@ const getAvailableSlots = async (
 
   validateBookingDateTime(date);
 
-  const availabilitySlots = await prisma.tutorAvailability.findMany({
-    where: {
-      tutorId,
-      dayOfWeek,
-      isActive: true,
-    },
-  });
-
-  if (!availabilitySlots.length) {
-    throw new Error("Tutor not available on this day");
-  }
-
   const tutorSlots = await prisma.tutorAvailability.findMany({
     where: {
       tutorId,
       dayOfWeek,
       isActive: true,
     },
-    orderBy: { startTime: "asc" },
   });
+
+  if (!tutorSlots.length) {
+    throw new Error("Tutor not available on this day");
+  }
 
   const bookedSlots = await prisma.bookings.findMany({
     where: {
       tutorId,
       sessionDate: date,
+      status: BookingStatus.CONFIRMED,
     },
     select: {
       startTime: true,
@@ -368,7 +359,7 @@ const getAvailableSlots = async (
 
   let availableSlots: { startTime: string; endTime: string }[] = [];
 
-  const now = new Date();
+  const now = addHours(new Date(), 6);
 
   const isToday = isSameDay(date, now);
 
@@ -402,7 +393,7 @@ const getAvailableSlots = async (
           endTime: minutesToTime(endMin),
         });
 
-        currentStart = currentStart + 30;
+        currentStart = currentStart + 60;
       }
     });
   });
@@ -507,7 +498,7 @@ const getBookingSessions = async (
   }
 
   return await prisma.$transaction(async (tx) => {
-    const today = addHours(startOfDay(new Date()), 6);
+    const today = startOfDay(new Date());
     const currentTime = format(new Date(), "HH:mm");
 
     await tx.bookings.updateMany({
@@ -613,9 +604,9 @@ const getDefaultClassLink = async (userId: string) => {
 };
 
 const getTutorStats = async (userId: string) => {
-  const today = addHours(startOfDay(new Date()), 6);
-  const currentMonthStart = addHours(startOfMonth(new Date()), 6);
-  const currentWeekStart = addHours(startOfWeek(new Date()), 6);
+  const today = startOfDay(new Date());
+  const currentMonthStart = startOfMonth(new Date());
+  const currentWeekStart = startOfWeek(new Date());
 
   return await prisma.$transaction(async (tx) => {
     const tutorProfile = await tx.tutorProfiles.findUnique({
@@ -800,7 +791,7 @@ const getWeeklyEarnings = async (userId: string) => {
     throw new Error("Tutor profile not found");
   }
 
-  const currentWeekStart = addHours(startOfWeek(new Date()), 6);
+  const currentWeekStart = startOfWeek(new Date());
 
   const data = Array.from({ length: 7 }, async (_, i) => {
     const dayStart = addDays(currentWeekStart, i);
@@ -831,7 +822,7 @@ const getWeeklyEarnings = async (userId: string) => {
 };
 
 const sendClassLink = async (bookingId: string, classLink: string) => {
-  const today = addHours(startOfDay(new Date()), 6);
+  const today = startOfDay(new Date());
   const currentTime = format(new Date(), "HH:mm");
 
   const bookings = await prisma.bookings.findUnique({

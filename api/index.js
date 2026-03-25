@@ -14,12 +14,12 @@ import { Router } from "express";
 import {
   addDays,
   addHours,
-  format,
-  getHours as getHours2,
-  getMinutes as getMinutes2,
+  format as format2,
+  getHours,
+  getMinutes,
   isEqual,
-  isSameDay as isSameDay2,
-  startOfDay as startOfDay2,
+  isSameDay,
+  startOfDay,
   startOfMonth,
   startOfWeek
 } from "date-fns";
@@ -50,12 +50,8 @@ var calculateTutionPrice = (duration, tutorHourlyRate) => {
 
 // src/helpers/TimeHelpers.ts
 import {
-  formatDistanceToNow,
-  getHours,
-  getMinutes,
-  isBefore,
-  isSameDay,
-  startOfDay
+  format,
+  formatDistanceToNow
 } from "date-fns";
 var timeToMinutes = (time) => {
   const [h, m] = time.split(":").map(Number);
@@ -124,16 +120,16 @@ var isOverlapping = (newBooking, existingBookings) => {
     return newStart < existingEnd && newEnd > existingStart;
   });
 };
-var validateBookingDateTime = (sessionDate, startTime) => {
+var validateBookingDateTime = (sessionDate, startTime, currentTime, todayDate) => {
   if (sessionDate) {
-    if (isBefore(startOfDay(sessionDate), startOfDay(/* @__PURE__ */ new Date()))) {
+    const sessionDateStr = format(sessionDate, "yyyy-MM-dd");
+    if (todayDate && sessionDateStr < todayDate) {
       throw new Error("Cannot see/book previous date slot!");
     }
-    if (startTime && isSameDay(sessionDate, /* @__PURE__ */ new Date())) {
-      const now = /* @__PURE__ */ new Date();
-      const currentMinutes = getHours(now) * 60 + getMinutes(now);
+    if (startTime && todayDate && sessionDateStr === todayDate && currentTime) {
+      const currentMinutes = timeToMinutes(currentTime);
       const bookingStartMinutes = timeToMinutes(startTime);
-      if (bookingStartMinutes < currentMinutes) {
+      if (bookingStartMinutes <= currentMinutes) {
         throw new Error("Cannot see/book previous slot!");
       }
     }
@@ -157,8 +153,8 @@ import { fileURLToPath } from "url";
 import * as runtime from "@prisma/client/runtime/client";
 var config = {
   "previewFeatures": [],
-  "clientVersion": "7.4.1",
-  "engineVersion": "55ae170b1ced7fc6ed07a15f110549408c501bb3",
+  "clientVersion": "7.4.2",
+  "engineVersion": "94a226be1cf2967af2541cca5529f0f7ba866919",
   "activeProvider": "postgresql",
   "inlineSchema": 'generator client {\n  provider = "prisma-client"\n  output   = "../generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nenum UserRole {\n  STUDENT\n  TUTOR\n  ADMIN\n}\n\nenum UserStatus {\n  BAN\n  UNBAN\n}\n\nmodel User {\n  id            String    @id\n  name          String\n  email         String\n  emailVerified Boolean   @default(false)\n  image         String?\n  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt\n  sessions      Session[]\n  accounts      Account[]\n\n  role   UserRole\n  phone  String?\n  status UserStatus? @default(UNBAN)\n\n  tutorProfile TutorProfiles?\n  bookings     Bookings[]\n\n  @@unique([email])\n  @@map("user")\n}\n\nmodel Session {\n  id        String   @id\n  expiresAt DateTime\n  token     String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([token])\n  @@index([userId])\n  @@map("session")\n}\n\nmodel Account {\n  id                    String    @id\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@index([userId])\n  @@map("account")\n}\n\nmodel Verification {\n  id         String   @id\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@index([identifier])\n  @@map("verification")\n}\n\nmodel TutorProfiles {\n  id                     String     @id @default(uuid())\n  userId                 String     @unique\n  categoriesId           String?\n  bio                    String?    @db.VarChar(255)\n  hourlyRate             Float      @default(0.00)\n  experienceYears        Float\n  totalRating            Int        @default(0)\n  totalReviews           Int        @default(0)\n  totalCompletedBookings Int        @default(0)\n  defaultClassLink       String?    @db.Text\n  createdAt              DateTime   @default(now())\n  updatedAt              DateTime   @updatedAt\n  bookings               Bookings[]\n\n  user         User                @relation(fields: [userId], references: [id])\n  category     Categories?         @relation(fields: [categoriesId], references: [id], onDelete: SetNull)\n  availability TutorAvailability[]\n\n  @@index([userId])\n  @@map("tutorProfiles")\n}\n\nmodel TutorAvailability {\n  id        String  @id @default(uuid())\n  tutorId   String\n  dayOfWeek Int\n  startTime String\n  endTime   String\n  isActive  Boolean @default(true)\n\n  tutor TutorProfiles @relation(fields: [tutorId], references: [id], onDelete: Cascade)\n\n  @@map("tutorAvailability")\n}\n\nmodel Categories {\n  id       String  @id @default(uuid())\n  name     String  @unique @db.VarChar(100)\n  isActive Boolean @default(true)\n\n  tutorProfiles TutorProfiles[]\n\n  @@index([name])\n  @@map("categories")\n}\n\nenum BookingStatus {\n  CONFIRMED\n  RUNNING\n  COMPLETED\n  CANCELLED\n}\n\nmodel Bookings {\n  id          String        @id @default(uuid())\n  studentId   String\n  tutorId     String\n  sessionDate DateTime\n  startTime   String\n  endTime     String\n  price       Float\n  status      BookingStatus @default(CONFIRMED)\n  classLink   String?       @db.Text\n  createdAt   DateTime      @default(now())\n  updatedAt   DateTime      @updatedAt\n\n  reviews Reviews?\n\n  student User          @relation(fields: [studentId], references: [id], onDelete: Cascade)\n  tutor   TutorProfiles @relation(fields: [tutorId], references: [id])\n\n  @@index([id])\n  @@map("bookings")\n}\n\nmodel Reviews {\n  id        String   @id @default(uuid())\n  bookingId String   @unique\n  rating    Int\n  comment   String   @db.Text\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  booking Bookings @relation(fields: [bookingId], references: [id])\n\n  @@index([bookingId])\n  @@map("reviews")\n}\n',
   "runtimeDataModel": {
@@ -243,8 +239,8 @@ var Sql2 = runtime2.Sql;
 var Decimal2 = runtime2.Decimal;
 var getExtensionContext = runtime2.Extensions.getExtensionContext;
 var prismaVersion = {
-  client: "7.4.1",
-  engine: "55ae170b1ced7fc6ed07a15f110549408c501bb3"
+  client: "7.4.2",
+  engine: "94a226be1cf2967af2541cca5529f0f7ba866919"
 };
 var NullTypes2 = {
   DbNull: runtime2.NullTypes.DbNull,
@@ -641,28 +637,21 @@ var getAvailableSlots = async (tutorId, selectedDate, slotDuration) => {
   const date = new Date(selectedDate);
   const dayOfWeek = date.getDay();
   validateBookingDateTime(date);
-  const availabilitySlots = await prisma.tutorAvailability.findMany({
+  const tutorSlots = await prisma.tutorAvailability.findMany({
     where: {
       tutorId,
       dayOfWeek,
       isActive: true
     }
   });
-  if (!availabilitySlots.length) {
+  if (!tutorSlots.length) {
     throw new Error("Tutor not available on this day");
   }
-  const tutorSlots = await prisma.tutorAvailability.findMany({
-    where: {
-      tutorId,
-      dayOfWeek,
-      isActive: true
-    },
-    orderBy: { startTime: "asc" }
-  });
   const bookedSlots = await prisma.bookings.findMany({
     where: {
       tutorId,
-      sessionDate: date
+      sessionDate: date,
+      status: BookingStatus.CONFIRMED
     },
     select: {
       startTime: true,
@@ -670,9 +659,9 @@ var getAvailableSlots = async (tutorId, selectedDate, slotDuration) => {
     }
   });
   let availableSlots = [];
-  const now = /* @__PURE__ */ new Date();
-  const isToday = isSameDay2(date, now);
-  const currentMinutes = getHours2(now) * 60 + getMinutes2(now);
+  const now = addHours(/* @__PURE__ */ new Date(), 6);
+  const isToday = isSameDay(date, now);
+  const currentMinutes = getHours(now) * 60 + getMinutes(now);
   const currentSlotMinutes = Math.ceil(currentMinutes / 30) * 30;
   tutorSlots.forEach((slot) => {
     const freeRanges = subtractBookedFromFreeSlots(
@@ -696,7 +685,7 @@ var getAvailableSlots = async (tutorId, selectedDate, slotDuration) => {
           startTime: minutesToTime(currentStart),
           endTime: minutesToTime(endMin)
         });
-        currentStart = currentStart + 30;
+        currentStart = currentStart + 60;
       }
     });
   });
@@ -765,8 +754,8 @@ var getBookingSessions = async (userId, status, page, limit, skip) => {
     andConditions.status = status;
   }
   return await prisma.$transaction(async (tx) => {
-    const today = addHours(startOfDay2(/* @__PURE__ */ new Date()), 6);
-    const currentTime = format(/* @__PURE__ */ new Date(), "HH:mm");
+    const today = startOfDay(/* @__PURE__ */ new Date());
+    const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
     await tx.bookings.updateMany({
       where: {
         OR: [
@@ -858,9 +847,9 @@ var getDefaultClassLink = async (userId) => {
   return { defaultClassLink: tutorProfile.defaultClassLink };
 };
 var getTutorStats = async (userId) => {
-  const today = addHours(startOfDay2(/* @__PURE__ */ new Date()), 6);
-  const currentMonthStart = addHours(startOfMonth(/* @__PURE__ */ new Date()), 6);
-  const currentWeekStart = addHours(startOfWeek(/* @__PURE__ */ new Date()), 6);
+  const today = startOfDay(/* @__PURE__ */ new Date());
+  const currentMonthStart = startOfMonth(/* @__PURE__ */ new Date());
+  const currentWeekStart = startOfWeek(/* @__PURE__ */ new Date());
   return await prisma.$transaction(async (tx) => {
     const tutorProfile = await tx.tutorProfiles.findUnique({
       where: { userId },
@@ -1015,11 +1004,11 @@ var getWeeklyEarnings = async (userId) => {
   if (!tutorProfile) {
     throw new Error("Tutor profile not found");
   }
-  const currentWeekStart = addHours(startOfWeek(/* @__PURE__ */ new Date()), 6);
+  const currentWeekStart = startOfWeek(/* @__PURE__ */ new Date());
   const data = Array.from({ length: 7 }, async (_, i) => {
     const dayStart = addDays(currentWeekStart, i);
     const dayEnd = addDays(dayStart, 1);
-    const dayName = format(dayStart, "EEE");
+    const dayName = format2(dayStart, "EEE");
     const result = await prisma.bookings.aggregate({
       where: {
         tutorId: tutorProfile.id,
@@ -1040,8 +1029,8 @@ var getWeeklyEarnings = async (userId) => {
   return weeklyEarnings;
 };
 var sendClassLink = async (bookingId, classLink) => {
-  const today = addHours(startOfDay2(/* @__PURE__ */ new Date()), 6);
-  const currentTime = format(/* @__PURE__ */ new Date(), "HH:mm");
+  const today = startOfDay(/* @__PURE__ */ new Date());
+  const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
   const bookings = await prisma.bookings.findUnique({
     where: { id: bookingId },
     select: { sessionDate: true, startTime: true }
@@ -1474,14 +1463,15 @@ var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: process.env.APP_URL,
   trustedOrigins: [process.env.APP_URL, process.env.BETTER_AUTH_URL],
   advanced: {
+    useSecureCookies: true,
     defaultCookieAttributes: {
       secure: true,
+      sameSite: "lax",
       httpOnly: true,
-      sameSite: "none",
-      partitioned: true
+      path: "/"
     }
   },
   user: {
@@ -1714,15 +1704,16 @@ var auth = betterAuth({
         console.error("Error sending verification email: ", error);
       }
     }
-  },
-  socialProviders: {
-    google: {
-      prompt: "select_account consent",
-      accessType: "offline",
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET
-    }
   }
+  // socialProviders: {
+  //   google: {
+  //     prompt: "select_account consent",
+  //     accessType: "offline",
+  //     clientId: process.env.GOOGLE_CLIENT_ID as string,
+  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+  //     redirectURI: `${authBaseURL}/google/callback`,
+  //   },
+  // },
 });
 
 // src/middleware/auth.ts
@@ -2163,14 +2154,14 @@ var AdminRouters = router3;
 import express3 from "express";
 
 // src/modules/Bookigs/booking.service.ts
-import { addHours as addHours3, format as format2, startOfDay as startOfDay3 } from "date-fns";
-var createBooking = async (studentId, bookingData) => {
+import { format as format3, startOfDay as startOfDay2 } from "date-fns";
+var createBooking = async (studentId, bookingData, currentTime, todayDate) => {
   return await prisma.$transaction(async (tx) => {
     const { tutorId, sessionDate, startTime, endTime } = bookingData;
     const date = new Date(sessionDate);
     const dayOfWeek = date.getDay();
     const slotDuration = timeDuration(startTime, endTime);
-    validateBookingDateTime(date, startTime);
+    validateBookingDateTime(date, startTime, currentTime, todayDate);
     const availabilitySlots = await tx.tutorAvailability.findMany({
       where: {
         tutorId,
@@ -2187,7 +2178,8 @@ var createBooking = async (studentId, bookingData) => {
     const existingTutorBookings = await tx.bookings.findMany({
       where: {
         tutorId,
-        sessionDate: date
+        sessionDate: date,
+        status: BookingStatus.CONFIRMED
       },
       select: {
         startTime: true,
@@ -2200,7 +2192,8 @@ var createBooking = async (studentId, bookingData) => {
     const existingMyBookings = await tx.bookings.findMany({
       where: {
         studentId,
-        sessionDate: date
+        sessionDate: date,
+        status: BookingStatus.CONFIRMED
       },
       select: {
         startTime: true,
@@ -2232,8 +2225,8 @@ var createBooking = async (studentId, bookingData) => {
 };
 var getAllBookings = async (status, page, limit, skip) => {
   return await prisma.$transaction(async (tx) => {
-    const today = addHours3(startOfDay3(/* @__PURE__ */ new Date()), 6);
-    const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
+    const today = startOfDay2(/* @__PURE__ */ new Date());
+    const currentTime = format3(/* @__PURE__ */ new Date(), "HH:mm");
     await tx.bookings.updateMany({
       where: {
         OR: [
@@ -2310,8 +2303,8 @@ var getAllBookings = async (status, page, limit, skip) => {
 };
 var getMyBookings = async (studentId, status, page, limit, skip) => {
   return await prisma.$transaction(async (tx) => {
-    const today = addHours3(startOfDay3(/* @__PURE__ */ new Date()), 6);
-    const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
+    const today = startOfDay2(/* @__PURE__ */ new Date());
+    const currentTime = format3(/* @__PURE__ */ new Date(), "HH:mm");
     const andConditions = { studentId };
     if (status) {
       andConditions.status = status;
@@ -2333,7 +2326,8 @@ var getMyBookings = async (studentId, status, page, limit, skip) => {
             }
           }
         ],
-        status: BookingStatus.CONFIRMED
+        status: BookingStatus.CONFIRMED,
+        studentId
       },
       data: {
         status: BookingStatus.CANCELLED
@@ -2421,10 +2415,12 @@ var createBooking2 = async (req, res) => {
       });
     }
     const studentId = req.user.id;
-    const bookingData = req.body;
+    const { currentTime, todayDate, ...bookingData } = req.body;
     const data = await BookingServices.createBooking(
       studentId,
-      bookingData
+      bookingData,
+      currentTime,
+      todayDate
     );
     return res.status(201).json({
       success: true,
@@ -2469,7 +2465,13 @@ var getMyBookings2 = async (req, res) => {
     const { page, limit, skip } = Pagination_default(
       req.query
     );
-    const data = await BookingServices.getMyBookings(studentId, status, page, limit, skip);
+    const data = await BookingServices.getMyBookings(
+      studentId,
+      status,
+      page,
+      limit,
+      skip
+    );
     return res.status(200).json({
       success: true,
       message: "Bookings retrieved successfully",
@@ -2769,9 +2771,8 @@ var ReviewRouters = router5;
 // src/middleware/notFound.ts
 var notFound = (req, res) => {
   res.status(404).json({
-    message: "Route not found",
-    path: req.originalUrl,
-    date: /* @__PURE__ */ new Date()
+    success: false,
+    message: "Route not found"
   });
 };
 
@@ -2801,8 +2802,8 @@ function errorHandler(err, req, res, next) {
     }
   }
   res.status(statusCode).json({
-    message: errorMessage,
-    error: err
+    success: false,
+    message: errorMessage
   });
 }
 var globalErrorHandler_default = errorHandler;
@@ -2884,16 +2885,18 @@ var UserRouters = router6;
 import express6 from "express";
 
 // src/modules/Uploads/upload.service.ts
-import { mkdir, writeFile } from "fs/promises";
-import { join as join3 } from "path";
+import { put } from "@vercel/blob";
 var uploadImage = async (file) => {
-  const uploadDir = join3(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  const fileName = `image-${Date.now()}-${file.originalname}`;
-  const filePath = join3(uploadDir, fileName);
-  await writeFile(filePath, file.buffer);
-  const baseUrl = process.env.BETTER_AUTH_URL;
-  return `${baseUrl}/uploads/${fileName}`;
+  try {
+    const fileName = `uploads/${Date.now()}-${file.originalname}`;
+    const blob = await put(fileName, file.buffer, {
+      access: "public",
+      contentType: file.mimetype
+    });
+    return blob.url;
+  } catch (error) {
+    throw error;
+  }
 };
 var UploadServices = {
   uploadImage
@@ -2918,7 +2921,7 @@ var uploadImage2 = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Error uploading file"
+      message: error || "Error uploading file"
     });
   }
 };
@@ -2934,15 +2937,15 @@ router7.post("/", upload.single("image"), UploadControllers.uploadImage);
 var UploadRouters = router7;
 
 // src/app.ts
-import { join as join4 } from "path";
+import { join as join3 } from "path";
 
 // src/modules/student/student.router.ts
 import express7 from "express";
 
 // src/modules/student/student.service.ts
-import { addHours as addHours4, startOfMonth as startOfMonth3 } from "date-fns";
+import { addHours as addHours3, startOfMonth as startOfMonth3 } from "date-fns";
 var getStudentStats = async (userId) => {
-  const currentMonthStart = addHours4(startOfMonth3(/* @__PURE__ */ new Date()), 6);
+  const currentMonthStart = addHours3(startOfMonth3(/* @__PURE__ */ new Date()), 6);
   return await prisma.$transaction(async (tx) => {
     const [
       totalBookings,
@@ -3167,13 +3170,11 @@ var app = express8();
 app.use(
   cors({
     origin: process.env.APP_URL,
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    credentials: true
   })
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));
-app.use(express8.static(join4(process.cwd(), "public")));
+app.use(express8.static(join3(process.cwd(), "public")));
 app.use(express8.json());
 app.use("/api/admin", AdminRouters);
 app.use("/api/users", UserRouters);

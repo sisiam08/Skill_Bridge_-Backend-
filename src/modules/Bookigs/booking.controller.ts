@@ -13,11 +13,13 @@ const createBooking = async (req: Request, res: Response) => {
       });
     }
     const studentId = req.user.id;
-    const bookingData = req.body;
+    const { currentTime, todayDate, ...bookingData } = req.body;
 
     const data = await BookingServices.createBooking(
       studentId as string,
       bookingData,
+      currentTime as string | undefined,
+      todayDate as string | undefined,
     );
 
     return res.status(201).json({
@@ -74,7 +76,13 @@ const getMyBookings = async (req: Request, res: Response) => {
       req.query,
     );
 
-    const data = await BookingServices.getMyBookings(studentId!, status, page, limit, skip);
+    const data = await BookingServices.getMyBookings(
+      studentId!,
+      status,
+      page,
+      limit,
+      skip,
+    );
 
     return res.status(200).json({
       success: true,

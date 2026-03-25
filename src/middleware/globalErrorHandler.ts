@@ -34,8 +34,8 @@ function errorHandler(
   }
 
   res.status(statusCode).json({
+    success: false,
     message: errorMessage,
-    error: err,
   });
 }
 

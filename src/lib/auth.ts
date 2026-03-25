@@ -18,14 +18,15 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  baseURL: process.env.BETTER_AUTH_URL!,
+  baseURL: process.env.APP_URL!,
   trustedOrigins: [process.env.APP_URL!, process.env.BETTER_AUTH_URL!],
   advanced: {
+    useSecureCookies: true,
     defaultCookieAttributes: {
       secure: true,
+      sameSite: "lax",
       httpOnly: true,
-      sameSite: "none",
-      partitioned: true,
+      path: "/",
     },
   },
   user: {
@@ -261,12 +262,13 @@ export const auth = betterAuth({
       }
     },
   },
-  socialProviders: {
-    google: {
-      prompt: "select_account consent",
-      accessType: "offline",
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-  },
+  // socialProviders: {
+  //   google: {
+  //     prompt: "select_account consent",
+  //     accessType: "offline",
+  //     clientId: process.env.GOOGLE_CLIENT_ID as string,
+  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+  //     redirectURI: `${authBaseURL}/google/callback`,
+  //   },
+  // },
 });

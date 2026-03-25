@@ -1,11 +1,6 @@
-import { date } from "better-auth/*";
 import {
+  format,
   formatDistanceToNow,
-  getHours,
-  getMinutes,
-  isBefore,
-  isSameDay,
-  startOfDay,
 } from "date-fns";
 
 export const timeToMinutes = (time: string) => {
@@ -20,6 +15,14 @@ export const minutesToTime = (minutes: number) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+};
+
+export const getCurrentTimeString = (): string => {
+  return format(new Date(), "HH:mm");
+};
+
+export const getCurrentDateString = (): string => {
+  return format(new Date(), "yyyy-MM-dd");
 };
 
 export const timeDuration = (startTime: string, endTime: string) => {
@@ -104,18 +107,21 @@ export const isOverlapping = (
 export const validateBookingDateTime = (
   sessionDate?: Date,
   startTime?: string,
+  currentTime?: string,
+  todayDate?: string,
 ) => {
   if (sessionDate) {
-    if (isBefore(startOfDay(sessionDate), startOfDay(new Date()))) {
+    const sessionDateStr = format(sessionDate, "yyyy-MM-dd");
+
+    if (todayDate && sessionDateStr < todayDate) {
       throw new Error("Cannot see/book previous date slot!");
     }
 
-    if (startTime && isSameDay(sessionDate, new Date())) {
-      const now = new Date();
-      const currentMinutes = getHours(now) * 60 + getMinutes(now);
+    if (startTime && todayDate && sessionDateStr === todayDate && currentTime) {
+      const currentMinutes = timeToMinutes(currentTime);
       const bookingStartMinutes = timeToMinutes(startTime);
 
-      if (bookingStartMinutes < currentMinutes) {
+      if (bookingStartMinutes <= currentMinutes) {
         throw new Error("Cannot see/book previous slot!");
       }
     }
@@ -124,7 +130,7 @@ export const validateBookingDateTime = (
   return true;
 };
 
-export const timeAgo = (date: Date ): string | undefined => {
+export const timeAgo = (date: Date): string | undefined => {
   // console.log(date);
   if (!date) return undefined;
   return formatDistanceToNow(new Date(date), { addSuffix: true });

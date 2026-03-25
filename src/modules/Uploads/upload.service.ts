@@ -1,18 +1,18 @@
-import { mkdir, writeFile } from "fs/promises";
-import { join } from "path";
+import { put } from "@vercel/blob";
 
 const uploadImage = async (file: Express.Multer.File) => {
-  const uploadDir = join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
+  try {
+    const fileName = `uploads/${Date.now()}-${file.originalname}`;
 
-  const fileName = `image-${Date.now()}-${file.originalname}`;
+    const blob = await put(fileName, file.buffer, {
+      access: "public",
+      contentType: file.mimetype,
+    });
 
-  const filePath = join(uploadDir, fileName);
-
-  await writeFile(filePath, file.buffer);
-
-  const baseUrl = process.env.BETTER_AUTH_URL;
-  return `${baseUrl}/uploads/${fileName}`;
+    return blob.url;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const UploadServices = {

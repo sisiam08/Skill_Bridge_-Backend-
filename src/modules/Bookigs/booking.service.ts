@@ -1,5 +1,4 @@
-import { _isoDate } from "better-auth/*";
-import { addHours, format, isEqual, startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
@@ -18,6 +17,8 @@ const createBooking = async (
     startTime: string;
     endTime: string;
   },
+  currentTime?: string,
+  todayDate?: string,
 ) => {
   return await prisma.$transaction(async (tx) => {
     const { tutorId, sessionDate, startTime, endTime } = bookingData;
@@ -26,7 +27,7 @@ const createBooking = async (
     const dayOfWeek = date.getDay();
     const slotDuration = timeDuration(startTime, endTime);
 
-    validateBookingDateTime(date, startTime);
+    validateBookingDateTime(date, startTime, currentTime, todayDate);
 
     const availabilitySlots = await tx.tutorAvailability.findMany({
       where: {
@@ -48,6 +49,7 @@ const createBooking = async (
       where: {
         tutorId,
         sessionDate: date,
+        status: BookingStatus.CONFIRMED,
       },
       select: {
         startTime: true,
@@ -63,6 +65,7 @@ const createBooking = async (
       where: {
         studentId,
         sessionDate: date,
+        status: BookingStatus.CONFIRMED,
       },
       select: {
         startTime: true,
@@ -105,7 +108,7 @@ const getAllBookings = async (
   skip?: number,
 ) => {
   return await prisma.$transaction(async (tx) => {
-    const today = addHours(startOfDay(new Date()), 6);
+    const today = startOfDay(new Date());
     const currentTime = format(new Date(), "HH:mm");
 
     await tx.bookings.updateMany({
@@ -196,7 +199,7 @@ const getMyBookings = async (
   skip?: number,
 ) => {
   return await prisma.$transaction(async (tx) => {
-    const today = addHours(startOfDay(new Date()), 6);
+    const today = startOfDay(new Date());
     const currentTime = format(new Date(), "HH:mm");
 
     const andConditions: any = { studentId };
@@ -223,6 +226,7 @@ const getMyBookings = async (
           },
         ],
         status: BookingStatus.CONFIRMED,
+        studentId: studentId,
       },
       data: {
         status: BookingStatus.CANCELLED,
