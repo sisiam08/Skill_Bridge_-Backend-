@@ -755,7 +755,7 @@ var getBookingSessions = async (userId, status, page, limit, skip) => {
   }
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay(/* @__PURE__ */ new Date());
-    const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
+    const currentTime = format2(addHours(/* @__PURE__ */ new Date(), 6), "HH:mm");
     await tx.bookings.updateMany({
       where: {
         OR: [
@@ -780,37 +780,39 @@ var getBookingSessions = async (userId, status, page, limit, skip) => {
       }
     });
     const isPaginated = limit !== void 0;
-    const result = await prisma.bookings.findMany({
-      ...isPaginated && { skip, take: limit },
-      where: andConditions,
-      orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
-      include: {
-        tutor: {
-          select: {
-            category: {
-              select: {
-                name: true
+    const [result, totalData] = await Promise.all([
+      prisma.bookings.findMany({
+        ...isPaginated && { skip, take: limit },
+        where: andConditions,
+        orderBy: [{ sessionDate: "asc" }, { startTime: "asc" }],
+        include: {
+          tutor: {
+            select: {
+              category: {
+                select: {
+                  name: true
+                }
               }
             }
-          }
-        },
-        student: {
-          select: {
-            name: true,
-            email: true,
-            role: true,
-            image: true
-          }
-        },
-        reviews: {
-          select: {
-            rating: true,
-            comment: true
+          },
+          student: {
+            select: {
+              name: true,
+              email: true,
+              role: true,
+              image: true
+            }
+          },
+          reviews: {
+            select: {
+              rating: true,
+              comment: true
+            }
           }
         }
-      }
-    });
-    const totalData = await prisma.bookings.count({ where: andConditions });
+      }),
+      tx.bookings.count({ where: andConditions })
+    ]);
     const totalPages = Math.ceil(totalData / limit);
     return {
       data: result,
@@ -1030,7 +1032,7 @@ var getWeeklyEarnings = async (userId) => {
 };
 var sendClassLink = async (bookingId, classLink) => {
   const today = startOfDay(/* @__PURE__ */ new Date());
-  const currentTime = format2(/* @__PURE__ */ new Date(), "HH:mm");
+  const currentTime = format2(addHours(/* @__PURE__ */ new Date(), 6), "HH:mm");
   const bookings = await prisma.bookings.findUnique({
     where: { id: bookingId },
     select: { sessionDate: true, startTime: true }
@@ -1992,12 +1994,29 @@ var getAllUsers = async (search, role, status, page, limit, skip) => {
     });
   }
   const isPaginated = limit !== void 0;
-  return await prisma.user.findMany({
-    ...isPaginated && { skip, take: limit },
-    where: {
-      AND: andConditions
+  const [result, totalData] = await Promise.all([
+    prisma.user.findMany({
+      ...isPaginated && { skip, take: limit },
+      where: {
+        AND: andConditions
+      }
+    }),
+    prisma.user.count({
+      where: {
+        AND: andConditions
+      }
+    })
+  ]);
+  const totalPages = Math.ceil(totalData / limit);
+  return {
+    data: result,
+    pagination: {
+      totalData,
+      page,
+      limit,
+      totalPages
     }
-  });
+  };
 };
 var updateUser = async (userId, userStatus) => {
   return await prisma.user.update({
@@ -2159,7 +2178,7 @@ var AdminRouters = router3;
 import express3 from "express";
 
 // src/modules/Bookigs/booking.service.ts
-import { format as format3, startOfDay as startOfDay2 } from "date-fns";
+import { addHours as addHours3, format as format3, startOfDay as startOfDay2 } from "date-fns";
 var createBooking = async (studentId, bookingData, currentTime, todayDate) => {
   return await prisma.$transaction(async (tx) => {
     const { tutorId, sessionDate, startTime, endTime } = bookingData;
@@ -2231,7 +2250,7 @@ var createBooking = async (studentId, bookingData, currentTime, todayDate) => {
 var getAllBookings = async (status, page, limit, skip) => {
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay2(/* @__PURE__ */ new Date());
-    const currentTime = format3(/* @__PURE__ */ new Date(), "HH:mm");
+    const currentTime = format3(addHours3(/* @__PURE__ */ new Date(), 6), "HH:mm");
     await tx.bookings.updateMany({
       where: {
         OR: [
@@ -2256,44 +2275,46 @@ var getAllBookings = async (status, page, limit, skip) => {
       }
     });
     const isPaginated = limit !== void 0;
-    const result = await tx.bookings.findMany({
-      ...isPaginated && { skip, take: limit },
-      where: status ? { status } : {},
-      orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
-      include: {
-        tutor: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                image: true
+    const [result, totalData] = await Promise.all([
+      tx.bookings.findMany({
+        ...isPaginated && { skip, take: limit },
+        where: status ? { status } : {},
+        orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
+        include: {
+          tutor: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                  image: true
+                }
+              },
+              category: {
+                select: { id: true, name: true }
               }
-            },
-            category: {
-              select: { id: true, name: true }
             }
+          },
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              image: true
+            }
+          },
+          reviews: {
+            select: { id: true, rating: true, comment: true }
           }
-        },
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            image: true
-          }
-        },
-        reviews: {
-          select: { id: true, rating: true, comment: true }
         }
-      }
-    });
-    const totalData = await prisma.bookings.count({
-      where: status ? { status } : {}
-    });
+      }),
+      tx.bookings.count({
+        where: status ? { status } : {}
+      })
+    ]);
     const totalPages = Math.ceil(totalData / limit);
     return {
       data: result,
@@ -2309,7 +2330,7 @@ var getAllBookings = async (status, page, limit, skip) => {
 var getMyBookings = async (studentId, status, page, limit, skip) => {
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay2(/* @__PURE__ */ new Date());
-    const currentTime = format3(/* @__PURE__ */ new Date(), "HH:mm");
+    const currentTime = format3(addHours3(/* @__PURE__ */ new Date(), 6), "HH:mm");
     const andConditions = { studentId };
     if (status) {
       andConditions.status = status;
@@ -2339,21 +2360,25 @@ var getMyBookings = async (studentId, status, page, limit, skip) => {
       }
     });
     const isPaginated = limit !== void 0;
-    const result = await tx.bookings.findMany({
-      ...isPaginated && { skip, take: limit },
-      where: andConditions,
-      orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
-      include: {
-        tutor: {
-          include: {
-            user: true,
-            category: true
-          }
-        },
-        reviews: true
-      }
-    });
-    const totalData = await prisma.bookings.count({ where: andConditions });
+    const [result, totalData] = await Promise.all([
+      tx.bookings.findMany({
+        ...isPaginated && { skip, take: limit },
+        where: andConditions,
+        orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
+        include: {
+          tutor: {
+            include: {
+              user: true,
+              category: true
+            }
+          },
+          reviews: true
+        }
+      }),
+      tx.bookings.count({
+        where: andConditions
+      })
+    ]);
     const totalPages = Math.ceil(totalData / limit);
     return {
       data: result,
@@ -2948,9 +2973,9 @@ import { join as join3 } from "path";
 import express7 from "express";
 
 // src/modules/student/student.service.ts
-import { addHours as addHours3, startOfMonth as startOfMonth3 } from "date-fns";
+import { addHours as addHours4, startOfMonth as startOfMonth3 } from "date-fns";
 var getStudentStats = async (userId) => {
-  const currentMonthStart = addHours3(startOfMonth3(/* @__PURE__ */ new Date()), 6);
+  const currentMonthStart = addHours4(startOfMonth3(/* @__PURE__ */ new Date()), 6);
   return await prisma.$transaction(async (tx) => {
     const [
       totalBookings,

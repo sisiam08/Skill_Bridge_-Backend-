@@ -1,4 +1,4 @@
-import { format, startOfDay } from "date-fns";
+import { addHours, format, startOfDay } from "date-fns";
 import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
 import { calculateTutionPrice } from "../../helpers/CalculateTutionPrice";
 import {
@@ -109,7 +109,7 @@ const getAllBookings = async (
 ) => {
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay(new Date());
-    const currentTime = format(new Date(), "HH:mm");
+    const currentTime = format(addHours(new Date(), 6), "HH:mm");
 
     await tx.bookings.updateMany({
       where: {
@@ -202,7 +202,7 @@ const getMyBookings = async (
 ) => {
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay(new Date());
-    const currentTime = format(new Date(), "HH:mm");
+    const currentTime = format(addHours(new Date(), 6), "HH:mm");
 
     const andConditions: any = { studentId };
 

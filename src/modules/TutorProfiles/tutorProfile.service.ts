@@ -499,7 +499,7 @@ const getBookingSessions = async (
 
   return await prisma.$transaction(async (tx) => {
     const today = startOfDay(new Date());
-    const currentTime = format(new Date(), "HH:mm");
+    const currentTime = format(addHours(new Date(), 6), "HH:mm");
 
     await tx.bookings.updateMany({
       where: {
@@ -825,7 +825,7 @@ const getWeeklyEarnings = async (userId: string) => {
 
 const sendClassLink = async (bookingId: string, classLink: string) => {
   const today = startOfDay(new Date());
-  const currentTime = format(new Date(), "HH:mm");
+  const currentTime = format(addHours(new Date(), 6), "HH:mm");
 
   const bookings = await prisma.bookings.findUnique({
     where: { id: bookingId },
