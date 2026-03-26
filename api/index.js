@@ -1957,7 +1957,7 @@ import express2 from "express";
 
 // src/modules/Admin/admin.service.ts
 import { addHours as addHours2, startOfMonth as startOfMonth2 } from "date-fns";
-var getAllUsers = async (search, role, status) => {
+var getAllUsers = async (search, role, status, page, limit, skip) => {
   const andConditions = [];
   if (search) {
     andConditions.push({
@@ -1991,7 +1991,9 @@ var getAllUsers = async (search, role, status) => {
       }
     });
   }
+  const isPaginated = limit !== void 0;
   return await prisma.user.findMany({
+    ...isPaginated && { skip, take: limit },
     where: {
       AND: andConditions
     }
@@ -2074,7 +2076,10 @@ var getAllUsers2 = async (req, res) => {
     const search = req.query.search ? String(req.query.search) : void 0;
     const role = req.query.role ? String(req.query.role) : void 0;
     const status = req.query.status ? String(req.query.status) : void 0;
-    const data = await AdminServices.getAllUsers(search, role, status);
+    const { page, limit, skip } = Pagination_default(
+      req.query
+    );
+    const data = await AdminServices.getAllUsers(search, role, status, page, limit, skip);
     res.status(200).json({
       success: true,
       message: "Users retrieved successfully",

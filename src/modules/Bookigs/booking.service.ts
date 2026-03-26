@@ -136,46 +136,48 @@ const getAllBookings = async (
     });
     const isPaginated = limit !== undefined;
 
-    const result = await tx.bookings.findMany({
-      ...(isPaginated && { skip: skip as number, take: limit as number }),
+    const [result, totalData] = await Promise.all([
+      tx.bookings.findMany({
+        ...(isPaginated && { skip: skip as number, take: limit as number }),
 
-      where: status ? { status } : {},
-      orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
-      include: {
-        tutor: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                image: true,
+        where: status ? { status } : {},
+        orderBy: [{ sessionDate: "desc" }, { startTime: "desc" }],
+        include: {
+          tutor: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                  image: true,
+                },
+              },
+              category: {
+                select: { id: true, name: true },
               },
             },
-            category: {
-              select: { id: true, name: true },
+          },
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              image: true,
             },
           },
-        },
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            image: true,
+          reviews: {
+            select: { id: true, rating: true, comment: true },
           },
         },
-        reviews: {
-          select: { id: true, rating: true, comment: true },
-        },
-      },
-    });
+      }),
 
-    const totalData = await prisma.bookings.count({
-      where: status ? { status } : {},
-    });
+      tx.bookings.count({
+        where: status ? { status } : {},
+      }),
+    ]);
 
     const totalPages = Math.ceil(totalData / (limit as number));
 
@@ -235,22 +237,26 @@ const getMyBookings = async (
 
     const isPaginated = limit !== undefined;
 
-    const result = await tx.bookings.findMany({
-      ...(isPaginated && { skip: skip as number, take: limit as number }),
-      where: andConditions,
-      orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
-      include: {
-        tutor: {
-          include: {
-            user: true,
-            category: true,
+    const [result, totalData] = await Promise.all([
+      tx.bookings.findMany({
+        ...(isPaginated && { skip: skip as number, take: limit as number }),
+        where: andConditions,
+        orderBy: [{ sessionDate: "desc" }, { startTime: "asc" }],
+        include: {
+          tutor: {
+            include: {
+              user: true,
+              category: true,
+            },
           },
+          reviews: true,
         },
-        reviews: true,
-      },
-    });
+      }),
 
-    const totalData = await prisma.bookings.count({ where: andConditions });
+      tx.bookings.count({
+        where: andConditions,
+      }),
+    ]);
 
     const totalPages = Math.ceil(totalData / (limit as number));
 

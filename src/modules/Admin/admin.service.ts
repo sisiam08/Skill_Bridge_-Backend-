@@ -6,8 +6,10 @@ const getAllUsers = async (
   search?: string,
   role?: UserRole,
   status?: UserStatus,
+  page?: number,
+  limit?: number,
+  skip?: number,
 ) => {
-
   const andConditions: any[] = [];
 
   if (search) {
@@ -45,12 +47,33 @@ const getAllUsers = async (
     });
   }
 
+  const isPaginated = limit !== undefined;
 
-  return await prisma.user.findMany({
-    where: {
-      AND: andConditions,
+  const [result, totalData] = await Promise.all([
+    prisma.user.findMany({
+      ...(isPaginated && { skip: skip as number, take: limit as number }),
+      where: {
+        AND: andConditions,
+      },
+    }),
+    prisma.user.count({
+      where: {
+        AND: andConditions,
+      },
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalData / (limit as number));
+
+  return {
+    data: result,
+    pagination: {
+      totalData,
+      page,
+      limit,
+      totalPages,
     },
-  });
+  };
 };
 
 const updateUser = async (userId: string, userStatus: UserStatus) => {

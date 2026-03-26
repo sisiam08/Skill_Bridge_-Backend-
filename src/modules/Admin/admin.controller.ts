@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { AdminServices } from "./admin.service";
 import { UserRole, UserStatus } from "../../../generated/prisma/client";
+import { PaginationOptions } from "../../types";
+import PaginationHelper from "../../helpers/Pagination";
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -14,7 +16,11 @@ const getAllUsers = async (req: Request, res: Response) => {
       ? (String(req.query.status) as UserStatus)
       : undefined;
 
-    const data = await AdminServices.getAllUsers(search, role, status);
+      const { page, limit, skip }: PaginationOptions = PaginationHelper(
+      req.query,
+    );
+
+    const data = await AdminServices.getAllUsers(search, role, status, page, limit, skip);
 
     res.status(200).json({
       success: true,
